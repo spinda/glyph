@@ -11,8 +11,8 @@ developed in [Muse-CGH](https://github.com/MrVPlussOne/Muse-CGH).
 
 ## Legal
 
-The Haskell implementation and most of the files in this repository are (c)
-2016 Michael Smith and licensed under the BSD3 license.
+The Haskell implementation and associated files are (c) 2016 Michael Smith and
+released under the BSD3 license.
 
 The original algorithm and letter form files were developed for
 [Muse-CGH](https://github.com/MrVPlussOne/Muse-CGH), which is (c) 2016 Wei
