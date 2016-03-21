@@ -19,8 +19,11 @@ library
   hs-source-dirs:      src
   exposed-modules:     Data.CharMap.Strict
                      , Longhand.Geometry
-                     , Longhand.Glyph
+                     , Longhand.Glyphs
+                     , Longhand.Glyphs.BuiltIn
+                     , Longhand.Glyphs.BuiltIn.Paths
                      , Longhand.Parse
+                     , Longhand.Parse.TH
   other-modules:       Paths_longhand
   build-depends:       base >= 4.4 && < 5
                      , attoparsec >= 0.13 && < 0.14
@@ -29,6 +32,7 @@ library
                      , deepseq >= 1.2 && < 1.5
                      , filepath >= 1.4 && < 1.5
                      , ghc-prim >= 0.4 && < 0.5
+                     , template-haskell >= 2.10 && < 2.11
   default-language:    Haskell2010
 
 executable longhand

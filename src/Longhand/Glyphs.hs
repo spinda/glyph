@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Longhand.Glyph (
+module Longhand.Glyphs (
     -- * Map from Char to Glyph Data
     GlyphMap
 
@@ -35,7 +35,7 @@ type GlyphMap = CharMap Glyph
 data Glyph = Glyph
   { glyphKind     :: !GlyphKind
   , glyphSegments :: ![GlyphSegment]
-  } deriving (Show, Data, Typeable, Generic)
+  } deriving (Eq, Show, Data, Typeable, Generic)
 
 data GlyphKind = UpperCaseLetter
                | LowerCaseLetter
@@ -48,5 +48,5 @@ data GlyphSegment = GlyphSegment
   , glyphSegmentEndWidth      :: !Double
   , glyphSegmentAlignTangent  :: !Bool
   , glyphSegmentIsStrokeBreak :: !Bool
-  } deriving (Show, Data, Typeable, Generic)
+  } deriving (Eq, Show, Data, Typeable, Generic)
 

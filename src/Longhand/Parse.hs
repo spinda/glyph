@@ -2,16 +2,11 @@
 
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Longhand.Parse (
-    -- * Loading Built-In Glyph Data
-    loadBuiltInGlyphData
-  , LoadGlyphsException(..)
-
     -- * Glyph File Parsing
-  , parseGlyphFiles
+    parseGlyphFiles
   , parseGlyphFile
   , parseGlyphData
   ) where
@@ -37,64 +32,15 @@ import qualified Data.CharMap.Strict as M
 
 import GHC.Generics
 
-import System.FilePath
-
-import Paths_longhand
-
 import Longhand.Geometry
-import Longhand.Glyph
-
---------------------------------------------------------------------------------
--- Loading Built-In Glyph Data -------------------------------------------------
---------------------------------------------------------------------------------
-
-data LoadGlyphsException = LoadGlyphsException ![(FilePath, String)]
-                           deriving (Data, Typeable, Generic)
-
-instance Show LoadGlyphsException where
-  show (LoadGlyphsException failures) =
-    "Failed to load Longhand's built-in glyph data:\n    "
-      ++ intercalate "\n    " (describe <$> failures)
-    where
-      describe (f, e) = f ++ ":\n        " ++ e
-
-instance Exception LoadGlyphsException where
-
-loadBuiltInGlyphData :: IO GlyphMap
-loadBuiltInGlyphData = do
-  dataDir <- getDataDir
-  let glyphsDir = dataDir </> "glyphs"
-  let files = map (\(f, cs) -> (glyphsDir </> f, cs)) builtInGlyphFiles
-  result <- parseGlyphFiles files
-  case result of
-    Left  errs -> throwIO $ LoadGlyphsException errs
-    Right lmap -> return lmap
-
-
-builtInGlyphFiles :: [(FilePath, [Char])]
-builtInGlyphFiles = concat [lowerCase, upperCase, punctuation]
-  where
-    lowerCase =
-      map (\c -> (c : ".txt", [c])) ['a'..'z']
-    upperCase =
-      map (\(f, [c]) -> ("upper_" ++ f, [toUpper c])) lowerCase
-    punctuation =
-      [ ("colon.txt", ":")
-      , ("comma.txt", ",")
-      , ("exclamation_mark.txt", "!")
-      , ("hyphen.txt", "-")
-      , ("period.txt", ".")
-      , ("question_mark.txt", "?")
-      , ("semicolon.txt", ";")
-      , ("upper_comma.txt", "'’")
-      ]
+import Longhand.Glyphs
 
 --------------------------------------------------------------------------------
 -- Glyph File Parsing ----------------------------------------------------------
 --------------------------------------------------------------------------------
 
 parseGlyphFiles :: [(FilePath, [Char])]
-                     -> IO (Either [(FilePath, String)] GlyphMap)
+                -> IO (Either [(FilePath, String)] GlyphMap)
 parseGlyphFiles pairs = do
   results <- mapM parse pairs
   let (errs, glyphs) = partitionEithers results

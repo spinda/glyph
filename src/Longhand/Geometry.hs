@@ -22,5 +22,5 @@ data CubicCurve = CubicCurve
   , cubicCurveParam2 :: !(Double, Double)
   , cubicCurveParam3 :: !(Double, Double)
   , cubicCurveParam4 :: !(Double, Double)
-  } deriving (Show, Data, Typeable, Generic)
+  } deriving (Eq, Show, Data, Typeable, Generic)
 
