@@ -1,19 +1,36 @@
--- | Core data types.
+-- | Letter form representation and manipulation.
 
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Longhand.Types (
-    Letter(..)
+module Longhand.Letters (
+    -- * Map from Char to Letter Form Data
+    LetterMap
+
+    -- * Letter Form Representation
+  , Letter(..)
   , LetterKind(..)
   , LetterSegment(..)
-  , CubicCurve(..)
   ) where
 
 import Data.Data
 import Data.Typeable
 
+import Data.CharMap.Strict (CharMap)
+
 import GHC.Generics
+
+import Longhand.Geometry
+
+--------------------------------------------------------------------------------
+-- Map from Char to Letter Form Data -------------------------------------------
+--------------------------------------------------------------------------------
+
+type LetterMap = CharMap Letter
+
+--------------------------------------------------------------------------------
+-- Letter Form Representation --------------------------------------------------
+--------------------------------------------------------------------------------
 
 data Letter = Letter
   { letterKind     :: !LetterKind
@@ -31,12 +48,5 @@ data LetterSegment = LetterSegment
   , letterSegmentEndWidth      :: !Double
   , letterSegmentAlignTangent  :: !Bool
   , letterSegmentIsStrokeBreak :: !Bool
-  } deriving (Show, Data, Typeable, Generic)
-
-data CubicCurve = CubicCurve
-  { cubicCurveParam1 :: !(Double, Double)
-  , cubicCurveParam2 :: !(Double, Double)
-  , cubicCurveParam3 :: !(Double, Double)
-  , cubicCurveParam4 :: !(Double, Double)
   } deriving (Show, Data, Typeable, Generic)
 
