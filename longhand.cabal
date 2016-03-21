@@ -13,13 +13,13 @@ copyright:             2016 Michael Smith
 category:              Graphics
 build-type:            Simple
 cabal-version:         >=1.10
-data-files:            letters/*.txt
+data-files:            glyphs/*.txt
 
 library
   hs-source-dirs:      src
   exposed-modules:     Data.CharMap.Strict
                      , Longhand.Geometry
-                     , Longhand.Letters
+                     , Longhand.Glyph
                      , Longhand.Parse
   other-modules:       Paths_longhand
   build-depends:       base >= 4.4 && < 5

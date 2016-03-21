@@ -1,4 +1,4 @@
--- | Parse letter form files in Muse-CGH's text format.
+-- | Parse glyph files in Muse-CGH's text format.
 
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -6,14 +6,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Longhand.Parse (
-    -- * Loading Built-In Letter Form Data
-    loadBuiltInLetterForms
-  , LoadLettersException(..)
+    -- * Loading Built-In Glyph Data
+    loadBuiltInGlyphData
+  , LoadGlyphsException(..)
 
-    -- * Letter Form File Parsing
-  , parseLetterFormFiles
-  , parseLetterFormFile
-  , parseLetterForm
+    -- * Glyph File Parsing
+  , parseGlyphFiles
+  , parseGlyphFile
+  , parseGlyphData
   ) where
 
 import Control.Applicative
@@ -42,37 +42,37 @@ import System.FilePath
 import Paths_longhand
 
 import Longhand.Geometry
-import Longhand.Letters
+import Longhand.Glyph
 
 --------------------------------------------------------------------------------
--- Loading Built-In Letter Form Data -------------------------------------------
+-- Loading Built-In Glyph Data -------------------------------------------------
 --------------------------------------------------------------------------------
 
-data LoadLettersException = LoadLettersException ![(FilePath, String)]
-                            deriving (Data, Typeable, Generic)
+data LoadGlyphsException = LoadGlyphsException ![(FilePath, String)]
+                           deriving (Data, Typeable, Generic)
 
-instance Show LoadLettersException where
-  show (LoadLettersException failures) =
-    "Failed to load Longhand's built-in letter form data:\n    "
+instance Show LoadGlyphsException where
+  show (LoadGlyphsException failures) =
+    "Failed to load Longhand's built-in glyph data:\n    "
       ++ intercalate "\n    " (describe <$> failures)
     where
       describe (f, e) = f ++ ":\n        " ++ e
 
-instance Exception LoadLettersException where
+instance Exception LoadGlyphsException where
 
-loadBuiltInLetterForms :: IO LetterMap
-loadBuiltInLetterForms = do
+loadBuiltInGlyphData :: IO GlyphMap
+loadBuiltInGlyphData = do
   dataDir <- getDataDir
-  let lettersDir = dataDir </> "letters"
-  let files = map (\(f, cs) -> (lettersDir </> f, cs)) builtInLetterFormFiles
-  result <- parseLetterFormFiles files
+  let glyphsDir = dataDir </> "glyphs"
+  let files = map (\(f, cs) -> (glyphsDir </> f, cs)) builtInGlyphFiles
+  result <- parseGlyphFiles files
   case result of
-    Left  errs -> throwIO $ LoadLettersException errs
+    Left  errs -> throwIO $ LoadGlyphsException errs
     Right lmap -> return lmap
 
 
-builtInLetterFormFiles :: [(FilePath, [Char])]
-builtInLetterFormFiles = concat [lowerCase, upperCase, punctuation]
+builtInGlyphFiles :: [(FilePath, [Char])]
+builtInGlyphFiles = concat [lowerCase, upperCase, punctuation]
   where
     lowerCase =
       map (\c -> (c : ".txt", [c])) ['a'..'z']
@@ -90,65 +90,65 @@ builtInLetterFormFiles = concat [lowerCase, upperCase, punctuation]
       ]
 
 --------------------------------------------------------------------------------
--- Letter Form File Parsing ----------------------------------------------------
+-- Glyph File Parsing ----------------------------------------------------------
 --------------------------------------------------------------------------------
 
-parseLetterFormFiles :: [(FilePath, [Char])]
-                     -> IO (Either [(FilePath, String)] LetterMap)
-parseLetterFormFiles pairs = do
+parseGlyphFiles :: [(FilePath, [Char])]
+                     -> IO (Either [(FilePath, String)] GlyphMap)
+parseGlyphFiles pairs = do
   results <- mapM parse pairs
-  let (errs, letters) = partitionEithers results
+  let (errs, glyphs) = partitionEithers results
   return $ case errs of
-    [] -> Right $ M.fromList $ concat letters
+    [] -> Right $ M.fromList $ concat glyphs
     _  -> Left  $ errs
   where
     parse (f, cs) = do
-      result <- parseLetterFormFile f
+      result <- parseGlyphFile f
       return $ case result of
         Left  err -> Left (f, err)
         Right out -> Right $ map (\c -> (c, out)) cs
 
 
-parseLetterFormFile :: FilePath -> IO (Either String Letter)
-parseLetterFormFile = fmap parseLetterForm . B.readFile
+parseGlyphFile :: FilePath -> IO (Either String Glyph)
+parseGlyphFile = fmap parseGlyphData . B.readFile
 
-parseLetterForm :: ByteString -> Either String Letter
-parseLetterForm = parseOnly editingP
+parseGlyphData :: ByteString -> Either String Glyph
+parseGlyphData = parseOnly editingP
 
 --------------------------------------------------------------------------------
--- Parse Muse-CGH Letter Text File Format --------------------------------------
+-- Parse Muse-CGH Glyph Text File Format ---------------------------------------
 --------------------------------------------------------------------------------
 
-editingP :: Parser Letter
-editingP = scalaTypeP "Editing" $ letterP <* comma <* listP (signed decimal)
+editingP :: Parser Glyph
+editingP = scalaTypeP "Editing" $ glyphP <* comma <* listP (signed decimal)
 
-letterP :: Parser Letter
-letterP = scalaTypeP "Letter" $ do
-  segments <- listP letterSegmentP
-  kind     <- option LowerCaseLetter (comma *> letterKindP)
-  return $ Letter
-    { letterKind     = kind
-    , letterSegments = segments
+glyphP :: Parser Glyph
+glyphP = scalaTypeP "Letter" $ do
+  segments <- listP glyphSegmentP
+  kind     <- option LowerCaseLetter (comma *> glyphKindP)
+  return $ Glyph
+    { glyphKind     = kind
+    , glyphSegments = segments
     }
 
-letterKindP :: Parser LetterKind
-letterKindP = (UpperCaseLetter <$ (string "Uppercase" <|> string "UpperCase"))
-          <|> (LowerCaseLetter <$ (string "Lowercase" <|> string "LowerCase"))
-          <|> (PunctuationMark <$ string "PunctuationMark")
+glyphKindP :: Parser GlyphKind
+glyphKindP = (UpperCaseLetter <$ (string "Uppercase" <|> string "UpperCase"))
+         <|> (LowerCaseLetter <$ (string "Lowercase" <|> string "LowerCase"))
+         <|> (PunctuationMark <$ string "PunctuationMark")
 
-letterSegmentP :: Parser LetterSegment
-letterSegmentP = scalaTypeP "LetterSeg" $ do
+glyphSegmentP :: Parser GlyphSegment
+glyphSegmentP = scalaTypeP "LetterSeg" $ do
   curve         <- cubicCurveP <* comma
   startWidth    <- double      <* comma
   endWidth      <- double      <* comma
   alignTangent  <- boolP       <* comma
   isStrokeBreak <- boolP
-  return $ LetterSegment
-    { letterSegmentCurve         = curve
-    , letterSegmentStartWidth    = startWidth
-    , letterSegmentEndWidth      = endWidth
-    , letterSegmentAlignTangent  = alignTangent
-    , letterSegmentIsStrokeBreak = isStrokeBreak
+  return $ GlyphSegment
+    { glyphSegmentCurve         = curve
+    , glyphSegmentStartWidth    = startWidth
+    , glyphSegmentEndWidth      = endWidth
+    , glyphSegmentAlignTangent  = alignTangent
+    , glyphSegmentIsStrokeBreak = isStrokeBreak
     }
 
 cubicCurveP :: Parser CubicCurve
