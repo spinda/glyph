@@ -110,11 +110,14 @@ cubicCurveP = scalaTypeP "CubicCurve" $ do
     , cubicCurveParam4 = param4
     }
 
-vec2P :: Parser (Double, Double)
+vec2P :: Parser Vec2
 vec2P = scalaTypeP "Vec2" $ do
   x <- double <* comma
   y <- double
-  return (x, y)
+  return $ Vec2
+    { vec2X = x
+    , vec2Y = y
+    }
 
 --------------------------------------------------------------------------------
 -- Scala Type Parsers ----------------------------------------------------------
