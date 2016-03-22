@@ -1,7 +1,7 @@
 # longhand
 
-Haskell implementation of handwriting synthesis, based on the algorithm
-developed in [Muse-CGH](https://github.com/MrVPlussOne/Muse-CGH).
+Handwriting synthesis in Haskell, based on Wei Jiayi's
+[Muse-CGH](https://github.com/MrVPlussOne/Muse-CGH) algorithm.
 
 [![Build Status](https://img.shields.io/circleci/project/spinda/longhand/master.svg)](https://circleci.com/gh/spinda/longhand)
 [![Hackage](https://img.shields.io/hackage/v/longhand.svg)](https://hackage.haskell.org/package/longhand)
