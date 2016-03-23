@@ -11,6 +11,7 @@ module Longhand.Glyphs (
   , Glyph(..)
   , GlyphKind(..)
   , GlyphSegment(..)
+  , GlyphCurve(..)
   ) where
 
 import Data.Data
@@ -18,9 +19,9 @@ import Data.Typeable
 
 import Data.CharMap.Strict (CharMap)
 
-import GHC.Generics
+import Diagrams.Prelude
 
-import Longhand.Geometry
+import GHC.Generics
 
 --------------------------------------------------------------------------------
 -- Map from Char to Glyph Data -------------------------------------------------
@@ -43,10 +44,17 @@ data GlyphKind = UpperCaseLetter
                  deriving (Eq, Show, Enum, Data, Typeable, Generic)
 
 data GlyphSegment = GlyphSegment
-  { glyphSegmentCurve         :: !CubicCurve
+  { glyphSegmentCurve         :: !GlyphCurve
   , glyphSegmentStartWidth    :: !Double
   , glyphSegmentEndWidth      :: !Double
   , glyphSegmentAlignTangent  :: !Bool
   , glyphSegmentIsStrokeBreak :: !Bool
+  } deriving (Eq, Show, Data, Typeable, Generic)
+
+data GlyphCurve = GlyphCurve
+  { glyphCurveStartPoint    :: !(Point V2 Double)
+  , glyphCurveControlPoint1 :: !(Point V2 Double)
+  , glyphCurveControlPoint2 :: !(Point V2 Double)
+  , glyphCurveEndPoint      :: !(Point V2 Double)
   } deriving (Eq, Show, Data, Typeable, Generic)
 

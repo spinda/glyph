@@ -30,9 +30,10 @@ import qualified Data.ByteString as B
 import Data.CharMap.Strict (CharMap)
 import qualified Data.CharMap.Strict as M
 
+import Diagrams.Prelude (Point(..), V2(..))
+
 import GHC.Generics
 
-import Longhand.Geometry
 import Longhand.Glyphs
 
 --------------------------------------------------------------------------------
@@ -97,27 +98,24 @@ glyphSegmentP = scalaTypeP "LetterSeg" $ do
     , glyphSegmentIsStrokeBreak = isStrokeBreak
     }
 
-cubicCurveP :: Parser CubicCurve
+cubicCurveP :: Parser GlyphCurve
 cubicCurveP = scalaTypeP "CubicCurve" $ do
-  param1 <- vec2P <* comma
-  param2 <- vec2P <* comma
-  param3 <- vec2P <* comma
-  param4 <- vec2P
-  return $ CubicCurve
-    { cubicCurveParam1 = param1
-    , cubicCurveParam2 = param2
-    , cubicCurveParam3 = param3
-    , cubicCurveParam4 = param4
+  st <- vec2P <* comma
+  c1 <- vec2P <* comma
+  c2 <- vec2P <* comma
+  ed <- vec2P
+  return $ GlyphCurve
+    { glyphCurveStartPoint    = st
+    , glyphCurveControlPoint1 = c1
+    , glyphCurveControlPoint2 = c2
+    , glyphCurveEndPoint      = ed
     }
 
-vec2P :: Parser Vec2
+vec2P :: Parser (Point V2 Double)
 vec2P = scalaTypeP "Vec2" $ do
   x <- double <* comma
   y <- double
-  return $ Vec2
-    { vec2X = x
-    , vec2Y = y
-    }
+  return $ P $ V2 x (-y)
 
 --------------------------------------------------------------------------------
 -- Scala Type Parsers ----------------------------------------------------------
