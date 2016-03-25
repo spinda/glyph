@@ -1,10 +1,12 @@
 -- | Handwriting synthesis and rendering.
 
 module Longhand.Render (
-    -- * Glyph Rendering
+    -- * Rendering Glyphs
     renderGlyph
   , renderGlyphSegment
-  , renderGlyphCurve
+
+    -- * Rendering Cubic Bézier Curves
+  , renderCubicCurve
   ) where
 
 import Diagrams.Prelude
@@ -12,16 +14,20 @@ import Diagrams.Prelude
 import Longhand.Glyphs
 
 --------------------------------------------------------------------------------
--- Glyph Rendering -------------------------------------------------------------
+-- Rendering Glyphs ------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 renderGlyph :: Glyph -> Path V2 Double
 renderGlyph = toPath . map renderGlyphSegment . glyphSegments
 
 renderGlyphSegment :: GlyphSegment -> Located (Segment Closed V2 Double)
-renderGlyphSegment = renderGlyphCurve . glyphSegmentCurve
+renderGlyphSegment = renderCubicCurve . glyphSegmentCurve
 
-renderGlyphCurve :: GlyphCurve -> Located (Segment Closed V2 Double)
-renderGlyphCurve (GlyphCurve p@(P st) (P c1) (P c2) (P ed)) =
+--------------------------------------------------------------------------------
+-- Rendering Cubic Bézier Curves -----------------------------------------------
+--------------------------------------------------------------------------------
+
+renderCubicCurve :: CubicCurve -> Located (Segment Closed V2 Double)
+renderCubicCurve (CubicCurve p@(P st) (P c1) (P c2) (P ed)) =
   Loc p $ bezier3 (c1 ^-^ st) (c2 ^-^ st) (ed ^-^ st)
 

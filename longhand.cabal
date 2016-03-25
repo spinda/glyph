@@ -24,6 +24,7 @@ library
                      , Longhand.Glyphs.BuiltIn.Paths
                      , Longhand.Parse
                      , Longhand.Parse.TH
+                     , Longhand.Perturb
                      , Longhand.Render
   other-modules:       Paths_longhand
   build-depends:       base >= 4.4 && < 5
@@ -36,6 +37,7 @@ library
                      , diagrams-svg >= 1.3 && < 1.5
                      , filepath >= 1.4 && < 1.5
                      , ghc-prim >= 0.4 && < 0.5
+                     , random >= 1.1 && < 1.2
                      , template-haskell >= 2.10 && < 2.11
   default-language:    Haskell2010
 
