@@ -72,6 +72,7 @@ import qualified GHC.Exts as G
 --------------------------------------------------------------------------------
 
 -- TODO: Manually implement Show and Read instances
+-- TODO: Factor out into separate "enum-map" package
 
 newtype CharMap a = CharMap { unCharMap :: IntMap a }
                     deriving ( Functor

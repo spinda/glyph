@@ -18,7 +18,6 @@ data-files:            glyphs/*.txt
 library
   hs-source-dirs:      src
   exposed-modules:     Data.CharMap.Strict
-                     , Longhand.Geometry
                      , Longhand.Glyphs
                      , Longhand.Glyphs.BuiltIn
                      , Longhand.Glyphs.BuiltIn.Paths
