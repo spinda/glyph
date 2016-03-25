@@ -11,10 +11,9 @@ Handwriting synthesis in Haskell, based on Wei Jiayi's
 
 ## Legal
 
-The Haskell implementation and associated files are (c) 2016 Michael Smith and
-released under the BSD3 license.
+longhand is (c) 2016 Michael Smith and released under the BSD 3-clause license.
 
-The original algorithm and letter form files were developed for
+The original algorithm and glyph files (glyphs/*.txt) were developed for
 [Muse-CGH](https://github.com/MrVPlussOne/Muse-CGH), which is (c) 2016 Wei
 Jiayi and released under the MIT license.
 
