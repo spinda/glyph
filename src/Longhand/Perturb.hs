@@ -45,7 +45,7 @@ warpSegment wave centroid segment = segment
   { glyphSegmentCurve = warpCurve wave centroid $ glyphSegmentCurve segment }
 
 warpCurve :: (Double -> Double) -> P2 Double -> CubicCurve -> CubicCurve
-warpCurve wave centroid curve = dragEndpoints curve st' ed'
+warpCurve wave centroid curve = curveDragEndpoints curve st' ed'
   where
     st' = warpPoint wave centroid $ cubicCurveStartPoint curve
     ed' = warpPoint wave centroid $ cubicCurveEndPoint curve

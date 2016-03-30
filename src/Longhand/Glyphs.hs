@@ -16,8 +16,8 @@ module Longhand.Glyphs (
 
     -- * Cubic Bézier Curves
   , CubicCurve(..)
-  , dragEndpoints
-  , straightLineLength
+  , curveDragEndpoints
+  , curveLinearLength
   , curveCentroid
   , curveEnvelope
   , curveBezier
@@ -80,16 +80,16 @@ data CubicCurve = CubicCurve
   , cubicCurveEndPoint      :: !(P2 Double)
   } deriving (Eq, Show, Data, Typeable, Generic)
 
-dragEndpoints :: CubicCurve -> P2 Double -> P2 Double -> CubicCurve
-dragEndpoints gc@(CubicCurve st c1 c2 ed) st' ed' =
+curveDragEndpoints :: CubicCurve -> P2 Double -> P2 Double -> CubicCurve
+curveDragEndpoints gc@(CubicCurve st c1 c2 ed) st' ed' =
   CubicCurve st' c1' c2' ed'
   where
-    scale = distance st' ed' / straightLineLength gc
+    scale = distance st' ed' / curveLinearLength gc
     c1' = (c1 ^-^ st) ^* scale ^+^ st'
     c2' = (c2 ^-^ ed) ^* scale ^+^ ed'
 
-straightLineLength :: CubicCurve -> Double
-straightLineLength (CubicCurve st _ _ ed) = distance st ed
+curveLinearLength :: CubicCurve -> Double
+curveLinearLength (CubicCurve st _ _ ed) = distance st ed
 
 curveCentroid :: CubicCurve -> P2 Double
 curveCentroid (CubicCurve st c1 c2 ed) = centroid [st, c1, c2, ed]
