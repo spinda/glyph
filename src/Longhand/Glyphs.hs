@@ -11,13 +11,16 @@ module Longhand.Glyphs (
   , Glyph(..)
   , GlyphKind(..)
   , GlyphSegment(..)
-  , glyphCenterOfMass
+  , glyphCentroid
+  , glyphEnvelope
 
     -- * Cubic Bézier Curves
   , CubicCurve(..)
   , dragEndpoints
   , straightLineLength
-  , curveCenterOfMass
+  , curveCentroid
+  , curveEnvelope
+  , curveBezier
   ) where
 
 import Data.Data
@@ -57,10 +60,14 @@ data GlyphSegment = GlyphSegment
   , glyphSegmentIsStrokeBreak :: !Bool
   } deriving (Eq, Show, Data, Typeable, Generic)
 
-glyphCenterOfMass :: Glyph -> P2 Double
-glyphCenterOfMass g = sumV (curveCenterOfMass <$> curves)
+glyphCentroid :: Glyph -> P2 Double
+glyphCentroid g = sumV (curveCentroid <$> curves)
   where
     curves = glyphSegmentCurve <$> glyphSegments g
+
+glyphEnvelope :: Glyph -> Envelope V2 Double
+glyphEnvelope =
+  mconcat . map (curveEnvelope . glyphSegmentCurve) . glyphSegments
 
 --------------------------------------------------------------------------------
 -- Cubic Bézier Curves ---------------------------------------------------------
@@ -84,13 +91,15 @@ dragEndpoints gc@(CubicCurve st c1 c2 ed) st' ed' =
 straightLineLength :: CubicCurve -> Double
 straightLineLength (CubicCurve st _ _ ed) = distance st ed
 
-curveCenterOfMass :: CubicCurve -> P2 Double
-curveCenterOfMass (CubicCurve a' b' c' d') =
-  mkP2 (avg a1 b1 c1 d1) (avg a2 b2 c2 d2)
+curveCentroid :: CubicCurve -> P2 Double
+curveCentroid (CubicCurve st c1 c2 ed) = centroid [st, c1, c2, ed]
+
+curveEnvelope :: CubicCurve -> Envelope V2 Double
+curveEnvelope cc = moveOriginTo (loc bezier) $ getEnvelope (unLoc bezier)
   where
-    avg a b c d = (1/12)*(3*a + 3*b + c + 3*d)
-    (a1, a2) = unp2 a'
-    (b1, b2) = unp2 b'
-    (c1, c2) = unp2 c'
-    (d1, d2) = unp2 d'
+    bezier = curveBezier cc
+
+curveBezier :: CubicCurve -> Located (Segment Closed V2 Double)
+curveBezier (CubicCurve p@(P st) (P c1) (P c2) (P ed)) =
+  Loc p $ bezier3 (c1 ^-^ st) (c2 ^-^ st) (ed ^-^ st)
 

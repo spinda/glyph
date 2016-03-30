@@ -38,7 +38,7 @@ warpGlyph :: (Double -> Double) -> Glyph -> Glyph
 warpGlyph wave glyph = glyph
   { glyphSegments = warpSegment wave centroid <$> glyphSegments glyph }
   where
-    centroid = glyphCenterOfMass glyph
+    centroid = glyphCentroid glyph
 
 warpSegment :: (Double -> Double) -> P2 Double -> GlyphSegment -> GlyphSegment
 warpSegment wave centroid segment = segment

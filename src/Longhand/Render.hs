@@ -28,6 +28,5 @@ renderGlyphSegment = renderCubicCurve . glyphSegmentCurve
 --------------------------------------------------------------------------------
 
 renderCubicCurve :: CubicCurve -> Located (Segment Closed V2 Double)
-renderCubicCurve (CubicCurve p@(P st) (P c1) (P c2) (P ed)) =
-  Loc p $ bezier3 (c1 ^-^ st) (c2 ^-^ st) (ed ^-^ st)
+renderCubicCurve = curveBezier
 
