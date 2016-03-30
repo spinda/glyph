@@ -1,8 +1,8 @@
 -- | Handwriting synthesis and rendering.
 
 module Longhand.Render (
-    -- * Rendering Words
-    renderWord
+    -- * Rendering Chunks
+    renderChunk
 
     -- * Rendering Glyphs
   , renderGlyph
@@ -16,25 +16,15 @@ import Data.List
 
 import Diagrams.Prelude
 
+import Longhand.Chunks
 import Longhand.Glyphs
 
 --------------------------------------------------------------------------------
--- Rendering Words -------------------------------------------------------------
+-- Rendering Chunks ------------------------------------------------------------
 --------------------------------------------------------------------------------
 
--- TODO: Track and line up glyph baselines (with jitter in perturbation)
-renderWord :: [Glyph] -> Path V2 Double
-renderWord = fst . foldl' (uncurry addGlyph) (mempty, 0)
-
-addGlyph :: Path V2 Double -> Double -> Glyph -> (Path V2 Double, Double)
-addGlyph path x glyph = (path <> renderGlyph glyph', x + width)
-  where
-    glyph' = translate delta glyph
-    delta = V2 (x - minX) 0
-    width = maxX - minX
-    minX = fst $ unp2 $ envelopeP unit_X envelope
-    maxX = fst $ unp2 $ envelopeP unitX envelope
-    envelope = getEnvelope glyph
+renderChunk :: Chunk -> Path V2 Double
+renderChunk = mconcat . map renderGlyph . chunkGlyphs
 
 --------------------------------------------------------------------------------
 -- Rendering Glyphs ------------------------------------------------------------
