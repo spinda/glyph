@@ -35,14 +35,12 @@ randomPairs n r = go n r []
 --------------------------------------------------------------------------------
 
 warpGlyph :: (Double -> Double) -> Glyph -> Glyph
-warpGlyph wave glyph = glyph
-  { glyphSegments = warpSegment wave centroid <$> glyphSegments glyph }
+warpGlyph wave glyph = mapGlyphSegments (warpSegment wave centroid) glyph
   where
     centroid = glyphCentroid glyph
 
 warpSegment :: (Double -> Double) -> P2 Double -> GlyphSegment -> GlyphSegment
-warpSegment wave centroid segment = segment
-  { glyphSegmentCurve = warpCurve wave centroid $ glyphSegmentCurve segment }
+warpSegment wave centroid = mapGlyphSegmentCurve (warpCurve wave centroid)
 
 warpCurve :: (Double -> Double) -> P2 Double -> CubicCurve -> CubicCurve
 warpCurve wave centroid curve = curveDragEndpoints curve st' ed'

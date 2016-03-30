@@ -2,6 +2,7 @@
 
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Longhand.Glyphs (
     -- * Map from Char to Glyph Data
@@ -12,15 +13,17 @@ module Longhand.Glyphs (
   , GlyphKind(..)
   , GlyphSegment(..)
   , glyphCentroid
-  , glyphEnvelope
+  , mapGlyphSegments
+  , mapGlyphCurves
+  , mapGlyphSegmentCurve
 
     -- * Cubic Bézier Curves
   , CubicCurve(..)
   , curveDragEndpoints
   , curveLinearLength
   , curveCentroid
-  , curveEnvelope
   , curveBezier
+  , mapCurvePoints
   ) where
 
 import Data.Data
@@ -60,14 +63,44 @@ data GlyphSegment = GlyphSegment
   , glyphSegmentIsStrokeBreak :: !Bool
   } deriving (Eq, Show, Data, Typeable, Generic)
 
+
 glyphCentroid :: Glyph -> P2 Double
 glyphCentroid g = sumV (curveCentroid <$> curves)
   where
     curves = glyphSegmentCurve <$> glyphSegments g
 
-glyphEnvelope :: Glyph -> Envelope V2 Double
-glyphEnvelope =
-  mconcat . map (curveEnvelope . glyphSegmentCurve) . glyphSegments
+
+mapGlyphSegments :: (GlyphSegment -> GlyphSegment) -> Glyph -> Glyph
+mapGlyphSegments f g = g
+  { glyphSegments = f <$> glyphSegments g }
+
+mapGlyphCurves :: (CubicCurve -> CubicCurve) -> Glyph -> Glyph
+mapGlyphCurves f g = g
+  { glyphSegments = mapGlyphSegmentCurve f <$> glyphSegments g }
+
+mapGlyphSegmentCurve :: (CubicCurve -> CubicCurve)
+                     -> GlyphSegment -> GlyphSegment
+mapGlyphSegmentCurve f g = g
+  { glyphSegmentCurve = f $ glyphSegmentCurve g }
+
+
+type instance V Glyph = V2
+type instance V GlyphSegment = V2
+
+type instance N Glyph = Double
+type instance N GlyphSegment = Double
+
+instance Transformable Glyph where
+  transform = mapGlyphSegments . transform
+
+instance Transformable GlyphSegment where
+  transform = mapGlyphSegmentCurve . transform
+
+instance Enveloped Glyph where
+  getEnvelope = mconcat . map getEnvelope . glyphSegments
+
+instance Enveloped GlyphSegment where
+  getEnvelope = getEnvelope . glyphSegmentCurve
 
 --------------------------------------------------------------------------------
 -- Cubic Bézier Curves ---------------------------------------------------------
@@ -79,6 +112,7 @@ data CubicCurve = CubicCurve
   , cubicCurveControlPoint2 :: !(P2 Double)
   , cubicCurveEndPoint      :: !(P2 Double)
   } deriving (Eq, Show, Data, Typeable, Generic)
+
 
 curveDragEndpoints :: CubicCurve -> P2 Double -> P2 Double -> CubicCurve
 curveDragEndpoints gc@(CubicCurve st c1 c2 ed) st' ed' =
@@ -94,12 +128,24 @@ curveLinearLength (CubicCurve st _ _ ed) = distance st ed
 curveCentroid :: CubicCurve -> P2 Double
 curveCentroid (CubicCurve st c1 c2 ed) = centroid [st, c1, c2, ed]
 
-curveEnvelope :: CubicCurve -> Envelope V2 Double
-curveEnvelope cc = moveOriginTo (loc bezier) $ getEnvelope (unLoc bezier)
-  where
-    bezier = curveBezier cc
-
 curveBezier :: CubicCurve -> Located (Segment Closed V2 Double)
 curveBezier (CubicCurve p@(P st) (P c1) (P c2) (P ed)) =
   Loc p $ bezier3 (c1 ^-^ st) (c2 ^-^ st) (ed ^-^ st)
+
+
+mapCurvePoints :: (P2 Double -> P2 Double) -> CubicCurve -> CubicCurve
+mapCurvePoints f (CubicCurve st c1 c2 ed) =
+  CubicCurve (f st) (f c1) (f c2) (f ed)
+
+
+type instance V CubicCurve = V2
+type instance N CubicCurve = Double
+
+instance Transformable CubicCurve where
+  transform = mapCurvePoints . papply
+
+instance Enveloped CubicCurve where
+  getEnvelope cc = translate offset $ getEnvelope bezier
+    where
+      (Loc (P offset) bezier) = curveBezier cc
 
