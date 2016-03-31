@@ -124,7 +124,8 @@ mapStrokeCurve f g = g { glyphStrokeCurve = f $ glyphStrokeCurve g }
 
 
 glyphCentroid :: Glyph -> P2 Double
-glyphCentroid g = sumV (curveCentroid <$> curves)
+glyphCentroid g =
+  sumV (curveCentroid <$> curves) ^/ fromIntegral (length curves)
   where
     curves = glyphStrokeCurve <$> glyphStrokes g
 
