@@ -1,6 +1,6 @@
 -- | Compute paths to built-in glyph data files.
 
-module Longhand.Glyphs.BuiltIn.Paths (
+module Longhand.Paths (
     -- * Built-In Glyph Data File Paths
     getBuiltInGlyphFilePaths
   , makeBuiltInGlyphFilePaths

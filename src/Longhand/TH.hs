@@ -2,7 +2,7 @@
 
 {-# LANGUAGE TemplateHaskell #-}
 
-module Longhand.Parse.TH (
+module Longhand.TH (
     -- * Template Haskell API
     importGlyphFiles
   , importGlyphFile
@@ -21,9 +21,8 @@ import Language.Haskell.TH.Quote
 
 import System.FilePath
 
-import Longhand.Glyphs
-
 import Longhand.Parse
+import Longhand.Types
 
 --------------------------------------------------------------------------------
 -- Template Haskell API --------------------------------------------------------

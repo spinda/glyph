@@ -4,31 +4,49 @@
 module Longhand.Perturb (
     -- * Randomly Perturb Glyphs
     perturbGlyph
+  , perturbWord
+  , perturbLine
+  , perturbPara
+  , perturbDoc
   ) where
+
+import Data.List
 
 import Diagrams.Prelude
 
 import System.Random
 
-import Longhand.Glyphs
+import Longhand.Types
 
 --------------------------------------------------------------------------------
 -- Randomly Perturb Glyphs -----------------------------------------------------
 --------------------------------------------------------------------------------
 
-perturbGlyph :: RandomGen r => r -> Double -> Glyph -> (Glyph, r)
-perturbGlyph rand scale glyph = (warpGlyph wave glyph, rand')
+perturbGlyph :: RandomGen r => Double -> r -> Glyph -> (r, Glyph)
+perturbGlyph scale rand glyph = (rand', warpGlyph wave glyph)
   where
     wave = sineWave pairs scale
-    (pairs, rand') = randomPairs 3 rand
+    (rand', pairs) = randomPairs 3 rand
 
-randomPairs :: RandomGen r => Int -> r -> ([(Double, Double)], r)
-randomPairs n r = go n r []
+randomPairs :: RandomGen r => Int -> r -> (r, [(Double, Double)])
+randomPairs n r = mapAccumL go r [1..n]
   where
-    go 0 r ps = (ps, r)
-    go n r ps = let (x, r' ) = randomR (0, 1) r
-                    (y, r'') = randomR (0, 1) r'
-                in  go (n - 1) r'' ((x, y) : ps)
+    go r _ = let (x, r' ) = randomR (0, 1) r
+                 (y, r'') = randomR (0, 1) r'
+             in  (r'', (x, y))
+
+
+perturbWord :: RandomGen r => Double -> r -> RawWord -> (r, RawWord)
+perturbWord scale = mapAccumL (perturbGlyph scale)
+
+perturbLine :: RandomGen r => Double -> r -> RawLine -> (r, RawLine)
+perturbLine scale = mapAccumL (perturbWord scale)
+
+perturbPara :: RandomGen r => Double -> r -> RawPara -> (r, RawPara)
+perturbPara scale = mapAccumL (perturbLine scale)
+
+perturbDoc :: RandomGen r => Double -> r -> RawDoc -> (r, RawDoc)
+perturbDoc scale = mapAccumL (perturbPara scale)
 
 --------------------------------------------------------------------------------
 -- Warp Glyphs & Glyph Components ----------------------------------------------
@@ -42,11 +60,11 @@ warpGlyph wave glyph = mapGlyphSegments (warpSegment wave centroid) glyph
 warpSegment :: (Double -> Double) -> P2 Double -> GlyphSegment -> GlyphSegment
 warpSegment wave centroid = mapGlyphSegmentCurve (warpCurve wave centroid)
 
-warpCurve :: (Double -> Double) -> P2 Double -> CubicCurve -> CubicCurve
+warpCurve :: (Double -> Double) -> P2 Double -> GlyphCurve -> GlyphCurve
 warpCurve wave centroid curve = curveDragEndpoints curve st' ed'
   where
-    st' = warpPoint wave centroid $ cubicCurveStartPoint curve
-    ed' = warpPoint wave centroid $ cubicCurveEndPoint curve
+    st' = warpPoint wave centroid $ glyphCurveStartPoint curve
+    ed' = warpPoint wave centroid $ glyphCurveEndPoint curve
 
 warpPoint :: (Double -> Double) -> P2 Double -> P2 Double -> P2 Double
 warpPoint wave centroid point = relPoint ^* wave angle ^+^ centroid

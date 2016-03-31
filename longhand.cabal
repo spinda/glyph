@@ -18,14 +18,15 @@ data-files:            glyphs/*.txt
 library
   hs-source-dirs:      src
   exposed-modules:     Data.CharMap.Strict
-                     , Longhand.Chunks
-                     , Longhand.Glyphs
-                     , Longhand.Glyphs.BuiltIn
-                     , Longhand.Glyphs.BuiltIn.Paths
+                     , Longhand.BuiltIn
+                  -- , Longhand.Connect
+                     , Longhand.Layout
                      , Longhand.Parse
-                     , Longhand.Parse.TH
+                     , Longhand.Paths
                      , Longhand.Perturb
                      , Longhand.Render
+                     , Longhand.TH
+                     , Longhand.Types
   other-modules:       Paths_longhand
   build-depends:       base >= 4.4 && < 5
                      , attoparsec >= 0.13 && < 0.14

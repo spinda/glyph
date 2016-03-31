@@ -6,26 +6,25 @@
 
 {-# LANGUAGE TemplateHaskell #-}
 
-module Longhand.Glyphs.BuiltIn (
+module Longhand.BuiltIn (
     -- * Built-In Glyph Data 
-    builtInGlyphData
+    builtInGlyphMap
   ) where
 
 import Language.Haskell.TH.Syntax
 
 import System.FilePath
 
-import Longhand.Parse.TH
-
-import Longhand.Glyphs
-import Longhand.Glyphs.BuiltIn.Paths
+import Longhand.Paths
+import Longhand.TH
+import Longhand.Types
 
 --------------------------------------------------------------------------------
 -- Built-In Glyph Data ---------------------------------------------------------
 --------------------------------------------------------------------------------
 
-builtInGlyphData :: GlyphMap
-builtInGlyphData =
+builtInGlyphMap :: GlyphMap
+builtInGlyphMap =
   $(importGlyphFiles =<< (makeBuiltInGlyphFilePaths .
-    (</> "../../..") . takeDirectory . loc_filename <$> location))
+    (</> "../..") . takeDirectory . loc_filename <$> location))
 

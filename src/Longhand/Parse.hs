@@ -34,7 +34,7 @@ import Diagrams.Prelude (P2, mkP2)
 
 import GHC.Generics
 
-import Longhand.Glyphs
+import Longhand.Types
 
 --------------------------------------------------------------------------------
 -- Glyph File Parsing ----------------------------------------------------------
@@ -85,7 +85,7 @@ glyphKindP = (UpperCaseLetter <$ (string "Uppercase" <|> string "UpperCase"))
 
 glyphSegmentP :: Parser GlyphSegment
 glyphSegmentP = scalaTypeP "LetterSeg" $ do
-  curve         <- cubicCurveP <* comma
+  curve         <- glyphCurveP <* comma
   startWidth    <- double      <* comma
   endWidth      <- double      <* comma
   alignTangent  <- boolP       <* comma
@@ -98,17 +98,17 @@ glyphSegmentP = scalaTypeP "LetterSeg" $ do
     , glyphSegmentIsStrokeBreak = isStrokeBreak
     }
 
-cubicCurveP :: Parser CubicCurve
-cubicCurveP = scalaTypeP "CubicCurve" $ do
+glyphCurveP :: Parser GlyphCurve
+glyphCurveP = scalaTypeP "CubicCurve" $ do
   st <- vec2P <* comma
   c1 <- vec2P <* comma
   c2 <- vec2P <* comma
   ed <- vec2P
-  return $ CubicCurve
-    { cubicCurveStartPoint    = st
-    , cubicCurveControlPoint1 = c1
-    , cubicCurveControlPoint2 = c2
-    , cubicCurveEndPoint      = ed
+  return $ GlyphCurve
+    { glyphCurveStartPoint    = st
+    , glyphCurveControlPoint1 = c1
+    , glyphCurveControlPoint2 = c2
+    , glyphCurveEndPoint      = ed
     }
 
 vec2P :: Parser (P2 Double)
