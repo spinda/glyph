@@ -53,12 +53,12 @@ perturbDoc scale = mapAccumL (perturbPara scale)
 --------------------------------------------------------------------------------
 
 warpGlyph :: (Double -> Double) -> Glyph -> Glyph
-warpGlyph wave glyph = mapGlyphSegments (warpSegment wave centroid) glyph
+warpGlyph wave glyph = mapGlyphStrokes (warpStroke wave centroid) glyph
   where
     centroid = glyphCentroid glyph
 
-warpSegment :: (Double -> Double) -> P2 Double -> GlyphSegment -> GlyphSegment
-warpSegment wave centroid = mapGlyphSegmentCurve (warpCurve wave centroid)
+warpStroke :: (Double -> Double) -> P2 Double -> GlyphStroke -> GlyphStroke
+warpStroke wave centroid = mapStrokeCurve (warpCurve wave centroid)
 
 warpCurve :: (Double -> Double) -> P2 Double -> GlyphCurve -> GlyphCurve
 warpCurve wave centroid curve = curveDragEndpoints curve st' ed'

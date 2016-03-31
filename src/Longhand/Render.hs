@@ -5,8 +5,8 @@
 module Longhand.Render (
     -- * Rendering Glyphs
     renderGlyph
-  , renderGlyphSegments
-  , renderGlyphSegment
+  , renderStrokes
+  , renderStroke
 
     -- * Rendering Glyph Combinations
   , renderWord
@@ -15,7 +15,7 @@ module Longhand.Render (
   , renderDoc
 
     -- * Rendering Cubic Bézier Curves
-  , renderGlyphCurve
+  , renderCurve
   ) where
 
 import Data.List
@@ -29,38 +29,38 @@ import Longhand.Types
 --------------------------------------------------------------------------------
 
 renderGlyph :: Glyph -> Path V2 Double
-renderGlyph = renderGlyphSegments . glyphSegments
+renderGlyph = renderStrokes . glyphStrokes
 
-renderGlyphSegments :: [GlyphSegment] -> Path V2 Double
-renderGlyphSegments = toPath . map renderGlyphSegment
+renderStrokes :: [GlyphStroke] -> Path V2 Double
+renderStrokes = toPath . map renderStroke
 
-renderGlyphSegment :: GlyphSegment -> Located (Segment Closed V2 Double)
-renderGlyphSegment = renderGlyphCurve . glyphSegmentCurve
+renderStroke :: GlyphStroke -> Located (Segment Closed V2 Double)
+renderStroke = renderCurve . glyphStrokeCurve
 
 --------------------------------------------------------------------------------
 -- Rendering Glyph Collections -------------------------------------------------
 --------------------------------------------------------------------------------
 
 renderWord :: GlyphWord -> Path V2 Double
-renderWord = mconcat . map (collapseLocated . mapLoc renderGlyph)
+renderWord = mconcat . map (flattenLocated . mapLoc renderGlyph)
 
 renderLine :: GlyphLine -> Path V2 Double
-renderLine = mconcat . map (collapseLocated . mapLoc renderWord)
+renderLine = mconcat . map (flattenLocated . mapLoc renderWord)
 
 renderPara :: GlyphPara -> Path V2 Double
-renderPara = mconcat . map (collapseLocated . mapLoc renderLine)
+renderPara = mconcat . map (flattenLocated . mapLoc renderLine)
 
 renderDoc :: GlyphDoc -> Path V2 Double
-renderDoc = mconcat . map (collapseLocated . mapLoc renderPara)
+renderDoc = mconcat . map (flattenLocated . mapLoc renderPara)
 
 
-collapseLocated :: (Num (N t), Transformable t) => Located t -> t
-collapseLocated (Loc (P d) x) = translate d x
+flattenLocated :: (Num (N t), Transformable t) => Located t -> t
+flattenLocated (Loc (P d) x) = translate d x
 
 --------------------------------------------------------------------------------
 -- Rendering Cubic Bézier Curves -----------------------------------------------
 --------------------------------------------------------------------------------
 
-renderGlyphCurve :: GlyphCurve -> Located (Segment Closed V2 Double)
-renderGlyphCurve = curveBezier
+renderCurve :: GlyphCurve -> Located (Segment Closed V2 Double)
+renderCurve = curveBezier
 

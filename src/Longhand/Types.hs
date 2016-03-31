@@ -11,9 +11,11 @@ module Longhand.Types (
     -- * Glyph Representation
   , Glyph(..)
   , GlyphKind(..)
-  , GlyphSegment(..)
-  , mapGlyphSegments
-  , mapGlyphSegmentCurve
+  , GlyphStroke(..)
+  , GlyphStrokeType(..)
+  , glyphStrokes
+  , mapGlyphStrokes
+  , mapStrokeCurve
   , glyphCentroid
 
     -- * Cubic Bézier Curves
@@ -24,7 +26,7 @@ module Longhand.Types (
   , curveCentroid
   , curveDragEndpoints
 
-    -- * Combinations of Glyphs
+    -- * Collections of Glyphs
     -- ** Raw, Unprocessed Glyph Input
   , RawWord
   , RawLine
@@ -38,6 +40,7 @@ module Longhand.Types (
   ) where
 
 import Data.Data
+import Data.Maybe
 import Data.Typeable
 
 import Data.CharMap.Strict (CharMap)
@@ -57,8 +60,11 @@ type GlyphMap = CharMap Glyph
 --------------------------------------------------------------------------------
 
 data Glyph = Glyph
-  { glyphKind     :: !GlyphKind
-  , glyphSegments :: ![GlyphSegment]
+  { glyphKind :: !GlyphKind
+  , glyphHead :: !(Maybe GlyphStroke)
+  , glyphBody :: ![GlyphStroke]
+  , glyphTail :: !(Maybe GlyphStroke)
+  , glyphHats :: ![GlyphStroke]
   } deriving (Eq, Show, Data, Typeable, Generic)
 
 data GlyphKind = UpperCaseLetter
@@ -66,46 +72,61 @@ data GlyphKind = UpperCaseLetter
                | PunctuationMark
                  deriving (Eq, Show, Enum, Data, Typeable, Generic)
 
-data GlyphSegment = GlyphSegment
-  { glyphSegmentCurve         :: !GlyphCurve
-  , glyphSegmentStartWidth    :: !Double
-  , glyphSegmentEndWidth      :: !Double
-  , glyphSegmentAlignTangent  :: !Bool
-  , glyphSegmentIsStrokeBreak :: !Bool
+data GlyphStroke = GlyphStroke
+  { glyphStrokeCurve         :: !GlyphCurve
+  , glyphStrokeType          :: !GlyphStrokeType
+  , glyphStrokeStartWidth    :: !Double
+  , glyphStrokeEndWidth      :: !Double
   } deriving (Eq, Show, Data, Typeable, Generic)
+
+data GlyphStrokeType = LerpStroke
+                     | ConnectStroke
+                       deriving (Eq, Show, Enum, Data, Typeable, Generic)
 
 
 type instance V Glyph = V2
-type instance V GlyphSegment = V2
+type instance V GlyphStroke = V2
 
 type instance N Glyph = Double
-type instance N GlyphSegment = Double
+type instance N GlyphStroke = Double
 
 instance Transformable Glyph where
-  transform = mapGlyphSegments . transform
+  transform = mapGlyphStrokes . transform
 
-instance Transformable GlyphSegment where
-  transform = mapGlyphSegmentCurve . transform
+instance Transformable GlyphStroke where
+  transform = mapStrokeCurve . transform
 
 instance Enveloped Glyph where
-  getEnvelope = mconcat . map getEnvelope . glyphSegments
+  getEnvelope = mconcat . map getEnvelope . glyphStrokes
 
-instance Enveloped GlyphSegment where
-  getEnvelope = getEnvelope . glyphSegmentCurve
+instance Enveloped GlyphStroke where
+  getEnvelope = getEnvelope . glyphStrokeCurve
 
 
-mapGlyphSegments :: (GlyphSegment -> GlyphSegment) -> Glyph -> Glyph
-mapGlyphSegments f g = g { glyphSegments = f <$> glyphSegments g }
+glyphStrokes :: Glyph -> [GlyphStroke]
+glyphStrokes g = concat
+  [ maybeToList $ glyphHead g
+  , glyphBody g
+  , maybeToList $ glyphTail g
+  , glyphHats g
+  ]
 
-mapGlyphSegmentCurve :: (GlyphCurve -> GlyphCurve)
-                     -> GlyphSegment -> GlyphSegment
-mapGlyphSegmentCurve f g = g { glyphSegmentCurve = f $ glyphSegmentCurve g }
+mapGlyphStrokes :: (GlyphStroke -> GlyphStroke) -> Glyph -> Glyph
+mapGlyphStrokes f g = g
+  { glyphHead = f <$> glyphHead g
+  , glyphBody = f <$> glyphBody g
+  , glyphTail = f <$> glyphTail g
+  , glyphHats = f <$> glyphHats g
+  }
+
+mapStrokeCurve :: (GlyphCurve -> GlyphCurve) -> GlyphStroke -> GlyphStroke
+mapStrokeCurve f g = g { glyphStrokeCurve = f $ glyphStrokeCurve g }
 
 
 glyphCentroid :: Glyph -> P2 Double
 glyphCentroid g = sumV (curveCentroid <$> curves)
   where
-    curves = glyphSegmentCurve <$> glyphSegments g
+    curves = glyphStrokeCurve <$> glyphStrokes g
 
 --------------------------------------------------------------------------------
 -- Cubic Bézier Curves ---------------------------------------------------------
@@ -153,7 +174,7 @@ curveDragEndpoints gc@(GlyphCurve st c1 c2 ed) st' ed' =
     c2' = (c2 ^-^ ed) ^* scale ^+^ ed'
 
 --------------------------------------------------------------------------------
--- Combinations of Glyphs ------------------------------------------------------
+-- Collections of Glyphs -------------------------------------------------------
 --------------------------------------------------------------------------------
 
 -- Raw, Unprocessed Glyph Input ------------------------------------------------

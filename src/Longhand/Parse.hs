@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module Longhand.Parse (
     -- * Glyph File Parsing
@@ -18,6 +19,7 @@ import Data.Attoparsec.ByteString
 import Data.Attoparsec.ByteString.Char8
 import Data.Attoparsec.Combinator
 
+import Data.Bifunctor
 import Data.Char
 import Data.Data
 import Data.Either
@@ -71,11 +73,16 @@ editingP = scalaTypeP "Editing" $ glyphP <* comma <* listP (signed decimal)
 
 glyphP :: Parser Glyph
 glyphP = scalaTypeP "Letter" $ do
-  segments <- listP glyphSegmentP
-  kind     <- option LowerCaseLetter (comma *> glyphKindP)
+  strokes <- listP glyphStrokeP
+  kind    <- option LowerCaseLetter (comma *> glyphKindP)
+  let (main, hats) = breakStrokes strokes
+  let (head, body, tail) = groupMainStrokes kind main
   return $ Glyph
-    { glyphKind     = kind
-    , glyphSegments = segments
+    { glyphKind = kind
+    , glyphHead = head
+    , glyphBody = body
+    , glyphTail = tail
+    , glyphHats = hats
     }
 
 glyphKindP :: Parser GlyphKind
@@ -83,19 +90,18 @@ glyphKindP = (UpperCaseLetter <$ (string "Uppercase" <|> string "UpperCase"))
          <|> (LowerCaseLetter <$ (string "Lowercase" <|> string "LowerCase"))
          <|> (PunctuationMark <$ string "PunctuationMark")
 
-glyphSegmentP :: Parser GlyphSegment
-glyphSegmentP = scalaTypeP "LetterSeg" $ do
+glyphStrokeP :: Parser (GlyphStroke, Bool)
+glyphStrokeP = scalaTypeP "LetterSeg" $ do
   curve         <- glyphCurveP <* comma
   startWidth    <- double      <* comma
   endWidth      <- double      <* comma
-  alignTangent  <- boolP       <* comma
-  isStrokeBreak <- boolP
-  return $ GlyphSegment
-    { glyphSegmentCurve         = curve
-    , glyphSegmentStartWidth    = startWidth
-    , glyphSegmentEndWidth      = endWidth
-    , glyphSegmentAlignTangent  = alignTangent
-    , glyphSegmentIsStrokeBreak = isStrokeBreak
+  _alignTangent <- boolP       <* comma
+  isBreak       <- boolP
+  return $ (, isBreak) $ GlyphStroke
+    { glyphStrokeCurve      = curve
+    , glyphStrokeType       = LerpStroke
+    , glyphStrokeStartWidth = startWidth
+    , glyphStrokeEndWidth   = endWidth
     }
 
 glyphCurveP :: Parser GlyphCurve
@@ -116,6 +122,26 @@ vec2P = scalaTypeP "Vec2" $ do
   x <- double <* comma
   y <- double
   return $ mkP2 x (-y)
+
+
+breakStrokes :: [(GlyphStroke, Bool)] -> ([GlyphStroke], [GlyphStroke])
+breakStrokes strokes = case secondary of
+  []     -> (main, [])
+  (x:xs) -> (main ++ [x], xs)
+  where
+    (main, secondary) = bimap (fst <$>) (fst <$>) $ break snd strokes
+
+groupMainStrokes :: GlyphKind -> [GlyphStroke]
+                 -> (Maybe GlyphStroke, [GlyphStroke], Maybe GlyphStroke)
+groupMainStrokes LowerCaseLetter strokes = (head, body, tail)
+  where
+    (head, rest) = case strokes of
+      []     -> (Nothing, [])
+      (x:xs) -> (Just x, xs)
+    (body, tail) = case rest of
+      []    -> ([], Nothing)
+      (_:_) -> (init rest, Just $ last rest)
+groupMainStrokes _ strokes = (Nothing, strokes, Nothing)
 
 --------------------------------------------------------------------------------
 -- Scala Type Parsers ----------------------------------------------------------
