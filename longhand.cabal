@@ -19,7 +19,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     Data.CharMap.Strict
                      , Longhand.BuiltIn
-                  -- , Longhand.Connect
+                     , Longhand.Connect
                      , Longhand.Layout
                      , Longhand.Parse
                      , Longhand.Paths
