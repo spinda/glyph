@@ -28,29 +28,61 @@ import Longhand.Types
 -- Rendering Glyphs ------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-renderGlyph :: Glyph -> Path V2 Double
+renderGlyph :: Renderable (Path V2 Double) b
+            => Glyph -> QDiagram b V2 Double Any
 renderGlyph = renderStrokes . glyphStrokes
 
-renderStrokes :: [GlyphStroke] -> Path V2 Double
-renderStrokes = toPath . map renderStroke
+renderStrokes :: Renderable (Path V2 Double) b
+              => [GlyphStroke] -> QDiagram b V2 Double Any
+renderStrokes = mconcat . map renderStroke
 
-renderStroke :: GlyphStroke -> Located (Segment Closed V2 Double)
-renderStroke = renderCurve . glyphStrokeCurve
+
+-- FIXME: Odd notches at ends of some letters ('m', 'n')
+-- TODO: Implement connection stroke interpolation
+renderStroke :: Renderable (Path V2 Double) b
+             => GlyphStroke -> QDiagram b V2 Double Any
+renderStroke stroke = (lc black) # (# fc black) $ strokeLocLoop $ (`at` start) $
+  loopFromSegments [startCap, rightBezier, endCap, leftBezier] openLinear
+  where
+    startCap = straight startDelta
+    endCap = straight $ negate endDelta ^* 2
+
+    leftBezier = reverseSegment $ unLoc $ renderCurve leftCurve
+    rightBezier = unLoc $ renderCurve rightCurve
+
+    leftCurve = curveDragEndpoints curve
+      (translate (negate startDelta) (glyphCurveStartPoint curve))
+      (translate (negate endDelta) (glyphCurveEndPoint curve))
+    rightCurve = curveDragEndpoints curve
+      (translate startDelta $ glyphCurveStartPoint curve)
+      (translate endDelta $ glyphCurveEndPoint curve)
+
+    startDelta =
+      normalize (normalAtStart bezier) ^* (glyphStrokeStartWidth stroke / 2)
+    endDelta =
+      normalize (normalAtEnd bezier) ^* (glyphStrokeEndWidth stroke / 2)
+
+    Loc start bezier = curveBezier curve
+    curve = glyphStrokeCurve stroke
 
 --------------------------------------------------------------------------------
 -- Rendering Glyph Collections -------------------------------------------------
 --------------------------------------------------------------------------------
 
-renderWord :: GlyphWord -> Path V2 Double
+renderWord :: Renderable (Path V2 Double) b
+           => GlyphWord -> QDiagram b V2 Double Any
 renderWord = mconcat . map (flattenLocated . mapLoc renderGlyph)
 
-renderLine :: GlyphLine -> Path V2 Double
+renderLine :: Renderable (Path V2 Double) b
+           => GlyphLine -> QDiagram b V2 Double Any
 renderLine = mconcat . map (flattenLocated . mapLoc renderWord)
 
-renderPara :: GlyphPara -> Path V2 Double
+renderPara :: Renderable (Path V2 Double) b
+           => GlyphPara -> QDiagram b V2 Double Any
 renderPara = mconcat . map (flattenLocated . mapLoc renderLine)
 
-renderDoc :: GlyphDoc -> Path V2 Double
+renderDoc :: Renderable (Path V2 Double) b
+           => GlyphDoc -> QDiagram b V2 Double Any
 renderDoc = mconcat . map (flattenLocated . mapLoc renderPara)
 
 

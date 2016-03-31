@@ -97,7 +97,7 @@ instance Transformable GlyphStroke where
   transform = mapStrokeCurve . transform
 
 instance Enveloped Glyph where
-  getEnvelope = mconcat . map getEnvelope . glyphStrokes
+  getEnvelope = getEnvelope . glyphStrokes
 
 instance Enveloped GlyphStroke where
   getEnvelope = getEnvelope . glyphStrokeCurve
