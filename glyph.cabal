@@ -24,6 +24,7 @@ library
                      , Glyph.Paths
                      , Glyph.Perturb
                      , Glyph.Render
+                     , Glyph.Serialize
                   -- , Glyph.TH
                      , Glyph.Types
   other-modules:       Paths_glyph
