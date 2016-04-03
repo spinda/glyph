@@ -22,7 +22,27 @@ import Glyph.Types
 --------------------------------------------------------------------------------
 
 mergeStrokes :: Stroke -> Stroke -> Stroke
-mergeStrokes = undefined
+mergeStrokes s1 s2 = Stroke
+  { strokeHead     = strokeHead $ s1
+  , strokeBody     = newBody
+  , strokeTail     = newTail
+  , strokeStartCap = strokeStartCap s1
+  , strokeEndCap   = strokeEndCap s2
+  }
+  where
+    (newBody, newTail) = case (strokeBody s2, strokeTail s2) of
+      (x : xs, ys) ->
+        ( strokeBody s1 ++ (x { strokeStepKind = ConnectionStep }) : xs
+        , ys
+        )
+      ([], y : ys) ->
+        ( strokeBody s1
+        , (y { strokeStepKind = ConnectionStep}) : ys
+        )
+      ([], []) ->
+        ( strokeBody s1
+        , []
+        )
 
 --------------------------------------------------------------------------------
 -- Connect Glyphs and Words ----------------------------------------------------
@@ -30,7 +50,15 @@ mergeStrokes = undefined
 
 connectGlyphs :: Aligned Glyph -> Aligned Glyph
               -> (Aligned Glyph, Aligned Glyph)
-connectGlyphs = undefined
+connectGlyphs l1@(Loc p1@(P v1) g1) l2@(Loc p2@(P v2) g2) =
+  case (glyphTail g1, glyphHead g2) of
+    (Just s1, Just s2) ->
+      ( Loc p1 $ g1
+          { glyphTail = Just $ mergeStrokes s1 $ translate (v2 ^-^ v1) s2 }
+      , Loc p2 $ g2
+          { glyphHead = Nothing }
+      )
+    _ -> (l1, l2)
 
 connectGlyphWord :: Aligned GlyphWord -> Aligned GlyphWord
 connectGlyphWord [] = []
@@ -41,39 +69,3 @@ connectGlyphWord (g:gs) = go g gs
       let (g1', g2') = connectGlyphs g1 g2
       in  g1' : go g2' gs
 
-{-
-connect :: Aligned Glyph -> Aligned Glyph
-              -> (Aligned Glyph, Aligned Glyph)
-connect l1@(Loc p1@(P v1) g1) l2@(Loc p2@(P v2) g2) =
-  case (glyphTail g1, glyphHead g2) of
-    (Just s1, Just s2) ->
-      ( Loc p1 $ g1
-          { glyphTail = Just $ mergeStrokes s1 $ translate (v2 ^-^ v1) s2 }
-      , Loc p2 $ g2
-          { glyphHead = Nothing }
-      )
-    _ -> (l1, l2)
-
-mergeStrokes :: GlyphStroke -> GlyphStroke -> GlyphStroke
-mergeStrokes g1 g2 = GlyphStroke
-  { glyphStrokeCurve      = mergeCurves (glyphStrokeCurve g1) (glyphStrokeCurve g2)
-  , glyphStrokeType       = ConnectStroke
-  , glyphStrokeStartWidth = glyphStrokeStartWidth g1
-  , glyphStrokeEndWidth   = glyphStrokeEndWidth g2
-  }
-
-mergeCurves :: GlyphCurve -> GlyphCurve -> GlyphCurve
-mergeCurves g1 g2 = GlyphCurve
-  { glyphCurveStartPoint    = glyphCurveStartPoint g1
-  , glyphCurveControlPoint1 = c1'
-  , glyphCurveControlPoint2 = c2'
-  , glyphCurveEndPoint      = glyphCurveEndPoint g2
-  }
-  where
-    startTangent = glyphCurveControlPoint1 g1 ^-^ glyphCurveStartPoint g1
-    endTangent   = glyphCurveControlPoint2 g2 ^-^ glyphCurveEndPoint   g2
-    scale        = distance (glyphCurveStartPoint g1) (glyphCurveEndPoint g2)
-    c1'          = glyphCurveStartPoint g1 ^+^ startTangent ^* scale
-    c2'          = glyphCurveEndPoint   g2 ^+^ endTangent   ^* scale
-
--}
