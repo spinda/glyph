@@ -20,12 +20,14 @@ library
                      , Glyph.Arrange
                   -- , Glyph.BuiltIn
                      , Glyph.Connect
+                     , Glyph.Geometry
                      , Glyph.Paths
                      , Glyph.Perturb
                      , Glyph.Render
                   -- , Glyph.TH
                      , Glyph.Types
   other-modules:       Paths_glyph
+                     , Glyph.Types.Internal
   build-depends:       base >= 4.4 && < 5
                      , containers >= 0.5 && < 0.6
                      , deepseq >= 1.2 && < 1.5

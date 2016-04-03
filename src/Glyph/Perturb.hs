@@ -29,6 +29,7 @@ import Diagrams.Prelude
 
 import System.Random
 
+import Glyph.Geometry
 import Glyph.Types
 
 --------------------------------------------------------------------------------
