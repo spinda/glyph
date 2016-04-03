@@ -4,8 +4,7 @@ synopsis:              Haskell implementation of handwriting synthesis
 description:           TODO
 homepage:              https://github.com/spinda/glyph#readme
 bug-reports:           https://github.com/spinda/glyph/issues
-license:               BSD3
-license-file:          LICENSE
+license-file:          COPYING
 author:                Michael Smith
 maintainer:            Michael Smith <michael@spinda.net>
 copyright:             2016 Michael Smith
