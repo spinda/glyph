@@ -16,7 +16,7 @@ module Glyph.Types (
     -- ** Strokes
   , Stroke(..)
   , StrokeStep(..)
-  , StrokeStepType(..)
+  , StrokeStepKind(..)
   , StrokeCap(..)
   , strokeSteps
   , strokePoints
@@ -33,5 +33,6 @@ module Glyph.Types (
   ) where
 
 import Glyph.Geometry
+import Glyph.Serialize
 import Glyph.Types.Internal
 

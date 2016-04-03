@@ -20,7 +20,7 @@ module Glyph.Types.Internal (
     -- ** Strokes
   , Stroke(..)
   , StrokeStep(..)
-  , StrokeStepType(..)
+  , StrokeStepKind(..)
   , StrokeCap(..)
   , strokeSteps
   , strokePoints
@@ -108,10 +108,10 @@ data Stroke = Stroke
 data StrokeStep = StrokeStep
   { strokeStepPoint :: !(P2 Double)
   , strokeStepWidth :: !Double
-  , strokeStepType  :: !StrokeStepType
+  , strokeStepKind  :: !StrokeStepKind
   } deriving (Eq, Show, Data, Typeable, Generic)
 
-data StrokeStepType = NormalStep | ConnectionStep
+data StrokeStepKind = NormalStep | ConnectionStep
                       deriving (Eq, Show, Enum, Data, Typeable, Generic)
 
 data StrokeCap = SharpCap | RoundCap | BevelCap
