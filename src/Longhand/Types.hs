@@ -9,30 +9,29 @@ module Longhand.Types (
     GlyphMap
 
     -- * Glyph Representation
+    -- ** Glyphs
   , Glyph(..)
-  , GlyphKind(..)
-  , GlyphStroke(..)
-  , GlyphStrokeType(..)
   , glyphStrokes
+  , glyphStrokeSteps
+  , glyphPoints
   , mapGlyphStrokes
-  , mapStrokeCurve
+  , mapGlyphStrokeSteps
+  , mapGlyphPoints
   , glyphCentroid
-
-    -- * Cubic Bézier Curves
-  , GlyphCurve(..)
-  , mapCurvePoints
-  , curveBezier
-  , curveLinearLength
-  , curveCentroid
-  , curveDragEndpoints
+    -- ** Strokes
+  , Stroke(..)
+  , StrokeStep(..)
+  , StrokeStepType(..)
+  , StrokeCap(..)
+  , strokeSteps
+  , strokePoints
+  , mapStrokeSteps
+  , mapStrokePoints
+  , mapStrokeStepPoint
+  , strokeCentroid
 
     -- * Collections of Glyphs
-    -- ** Raw, Unprocessed Glyph Input
-  , RawWord
-  , RawLine
-  , RawPara
-  , RawDoc
-    -- ** Processed Glyph Output (Post-Layout)
+  , Arranged
   , GlyphWord
   , GlyphLine
   , GlyphPara
@@ -41,6 +40,7 @@ module Longhand.Types (
 
 import Data.Data
 import Data.Maybe
+import Data.List
 import Data.Typeable
 
 import Data.CharMap.Strict (CharMap)
@@ -59,51 +59,25 @@ type GlyphMap = CharMap Glyph
 -- Glyph Representation --------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- Glyphs ----------------------------------------------------------------------
+
 data Glyph = Glyph
-  { glyphKind :: !GlyphKind
-  , glyphHead :: !(Maybe GlyphStroke)
-  , glyphBody :: ![GlyphStroke]
-  , glyphTail :: !(Maybe GlyphStroke)
-  , glyphHats :: ![GlyphStroke]
+  { glyphHead :: !(Maybe Stroke)
+  , glyphBody :: ![Stroke]
+  , glyphTail :: !(Maybe Stroke)
+  , glyphHats :: ![Stroke]
   } deriving (Eq, Show, Data, Typeable, Generic)
-
-data GlyphKind = UpperCaseLetter
-               | LowerCaseLetter
-               | PunctuationMark
-                 deriving (Eq, Show, Enum, Data, Typeable, Generic)
-
-data GlyphStroke = GlyphStroke
-  { glyphStrokeCurve         :: !GlyphCurve
-  , glyphStrokeType          :: !GlyphStrokeType
-  , glyphStrokeStartWidth    :: !Double
-  , glyphStrokeEndWidth      :: !Double
-  } deriving (Eq, Show, Data, Typeable, Generic)
-
-data GlyphStrokeType = LerpStroke
-                     | ConnectStroke
-                       deriving (Eq, Show, Enum, Data, Typeable, Generic)
-
 
 type instance V Glyph = V2
-type instance V GlyphStroke = V2
-
 type instance N Glyph = Double
-type instance N GlyphStroke = Double
 
 instance Transformable Glyph where
   transform = mapGlyphStrokes . transform
 
-instance Transformable GlyphStroke where
-  transform = mapStrokeCurve . transform
-
 instance Enveloped Glyph where
   getEnvelope = getEnvelope . glyphStrokes
 
-instance Enveloped GlyphStroke where
-  getEnvelope = getEnvelope . glyphStrokeCurve
-
-
-glyphStrokes :: Glyph -> [GlyphStroke]
+glyphStrokes :: Glyph -> [Stroke]
 glyphStrokes g = concat
   [ maybeToList $ glyphHead g
   , glyphBody g
@@ -111,7 +85,13 @@ glyphStrokes g = concat
   , glyphHats g
   ]
 
-mapGlyphStrokes :: (GlyphStroke -> GlyphStroke) -> Glyph -> Glyph
+glyphStrokeSteps :: Glyph -> [StrokeStep]
+glyphStrokeSteps = concatMap strokeSteps . glyphStrokes
+
+glyphPoints :: Glyph -> [P2 Double]
+glyphPoints = concatMap strokePoints . glyphStrokes
+
+mapGlyphStrokes :: (Stroke -> Stroke) -> Glyph -> Glyph
 mapGlyphStrokes f g = g
   { glyphHead = f <$> glyphHead g
   , glyphBody = f <$> glyphBody g
@@ -119,76 +99,97 @@ mapGlyphStrokes f g = g
   , glyphHats = f <$> glyphHats g
   }
 
-mapStrokeCurve :: (GlyphCurve -> GlyphCurve) -> GlyphStroke -> GlyphStroke
-mapStrokeCurve f g = g { glyphStrokeCurve = f $ glyphStrokeCurve g }
+mapGlyphStrokeSteps :: (StrokeStep -> StrokeStep) -> Glyph -> Glyph
+mapGlyphStrokeSteps f = mapGlyphStrokes (mapStrokeSteps f)
 
+mapGlyphPoints :: (P2 Double -> P2 Double) -> Glyph -> Glyph
+mapGlyphPoints f = mapGlyphStrokes (mapStrokePoints f)
 
 glyphCentroid :: Glyph -> P2 Double
-glyphCentroid g =
-  sumV (curveCentroid <$> curves) ^/ fromIntegral (length curves)
+glyphCentroid g = sumV centroids ^/ fromIntegral (length centroids)
   where
-    curves = glyphStrokeCurve <$> glyphStrokes g
+    centroids = strokeCentroid <$> glyphStrokes g
 
---------------------------------------------------------------------------------
--- Cubic Bézier Curves ---------------------------------------------------------
---------------------------------------------------------------------------------
+-- Strokes ---------------------------------------------------------------------
 
-data GlyphCurve = GlyphCurve
-  { glyphCurveStartPoint    :: !(P2 Double)
-  , glyphCurveControlPoint1 :: !(P2 Double)
-  , glyphCurveControlPoint2 :: !(P2 Double)
-  , glyphCurveEndPoint      :: !(P2 Double)
+data Stroke = Stroke
+  { strokeHead     :: ![StrokeStep]
+  , strokeBody     :: ![StrokeStep]
+  , strokeTail     :: ![StrokeStep]
+  , strokeStartCap :: !StrokeCap
+  , strokeEndCap   :: !StrokeCap
   } deriving (Eq, Show, Data, Typeable, Generic)
 
+data StrokeStep = StrokeStep
+  { strokeStepPoint :: !(P2 Double)
+  , strokeStepWidth :: !Double
+  , strokeStepType  :: !StrokeStepType
+  } deriving (Eq, Show, Data, Typeable, Generic)
 
-type instance V GlyphCurve = V2
-type instance N GlyphCurve = Double
+data StrokeStepType = NormalStep | ConnectionStep
+                      deriving (Eq, Show, Enum, Data, Typeable, Generic)
 
-instance Transformable GlyphCurve where
-  transform = mapCurvePoints . papply
+data StrokeCap = SharpCap | RoundCap | BevelCap
+                 deriving (Eq, Show, Data, Typeable, Generic)
 
-instance Enveloped GlyphCurve where
-  getEnvelope = getEnvelope . mapLoc getEnvelope . curveBezier
+type instance V Stroke = V2
+type instance N Stroke = Double
 
+type instance V StrokeStep = V2
+type instance N StrokeStep = Double
 
-mapCurvePoints :: (P2 Double -> P2 Double) -> GlyphCurve -> GlyphCurve
-mapCurvePoints f (GlyphCurve st c1 c2 ed) =
-  GlyphCurve (f st) (f c1) (f c2) (f ed)
+instance Transformable Stroke where
+  transform = mapStrokeSteps . transform
 
+instance Transformable StrokeStep where
+  transform = mapStrokeStepPoint . transform
 
-curveBezier :: GlyphCurve -> Located (Segment Closed V2 Double)
-curveBezier (GlyphCurve p@(P st) (P c1) (P c2) (P ed)) =
-  Loc p $ bezier3 (c1 ^-^ st) (c2 ^-^ st) (ed ^-^ st)
+instance Enveloped Stroke where
+  getEnvelope = getEnvelope . strokeSteps
 
-curveLinearLength :: GlyphCurve -> Double
-curveLinearLength (GlyphCurve st _ _ ed) = distance st ed
+instance Enveloped StrokeStep where
+  getEnvelope = getEnvelope . strokeStepPoint
 
-curveCentroid :: GlyphCurve -> P2 Double
-curveCentroid (GlyphCurve st c1 c2 ed) = centroid [st, c1, c2, ed]
+strokeSteps :: Stroke -> [StrokeStep]
+strokeSteps stroke = concat
+  [ strokeHead stroke
+  , strokeBody stroke
+  , strokeTail stroke
+  ]
 
-curveDragEndpoints :: GlyphCurve -> P2 Double -> P2 Double -> GlyphCurve
-curveDragEndpoints gc@(GlyphCurve st c1 c2 ed) st' ed' =
-  GlyphCurve st' c1' c2' ed'
-  where
-    scale = distance st' ed' / curveLinearLength gc
-    c1' = (c1 ^-^ st) ^* scale ^+^ st'
-    c2' = (c2 ^-^ ed) ^* scale ^+^ ed'
+strokePoints :: Stroke -> [P2 Double]
+strokePoints = (strokeStepPoint <$>) . strokeSteps
+
+mapStrokeSteps :: (StrokeStep -> StrokeStep) -> Stroke -> Stroke
+mapStrokeSteps f stroke = stroke
+  { strokeHead = f <$> strokeHead stroke
+  , strokeBody = f <$> strokeBody stroke
+  , strokeTail = f <$> strokeTail stroke
+  }
+
+mapStrokePoints :: (P2 Double -> P2 Double) -> Stroke -> Stroke
+mapStrokePoints f = mapStrokeSteps (mapStrokeStepPoint f)
+
+mapStrokeStepPoint :: (P2 Double -> P2 Double)
+               -> StrokeStep -> StrokeStep
+mapStrokeStepPoint f handle = handle
+  { strokeStepPoint = f $ strokeStepPoint handle
+  }
+
+strokeCentroid :: Stroke -> P2 Double
+strokeCentroid = centroid . strokePoints
 
 --------------------------------------------------------------------------------
 -- Collections of Glyphs -------------------------------------------------------
 --------------------------------------------------------------------------------
 
--- Raw, Unprocessed Glyph Input ------------------------------------------------
+type family Arranged a where
+  Arranged [[a]] = [Located (Arranged [a])]
+  Arranged [a] = [Arranged a]
+  Arranged a = Located a
 
-type RawWord = [Glyph]
-type RawLine = [RawWord]
-type RawPara = [RawLine]
-type RawDoc  = [RawPara]
-
--- Processed Glyph Output (Post-Layout) ----------------------------------------
-
-type GlyphWord = [Located Glyph]
-type GlyphLine = [Located GlyphWord]
-type GlyphPara = [Located GlyphLine]
-type GlyphDoc  = [Located GlyphPara]
+type GlyphWord = [Glyph]
+type GlyphLine = [GlyphWord]
+type GlyphPara = [GlyphLine]
+type GlyphDoc  = [GlyphPara]
 

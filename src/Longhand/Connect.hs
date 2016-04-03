@@ -1,16 +1,17 @@
 -- | Make connections between glyphs in words.
 
-module Longhand.Connect (
-    -- * Connect Glyphs
-    connectGlyphs
-  , connectWord
-  , connectLine
-  , connectPara
-  , connectDoc
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
-    -- * Combine Glyph Strokes
-  , mergeStrokes
-  , mergeCurves
+module Longhand.Connect (
+    -- * Merge Strokes
+    mergeStrokes
+
+    -- * Connect Glyphs and Words
+  , connectGlyphs
+  , connectWord
+  , ConnectWords(..)
   ) where
 
 import Diagrams.Prelude
@@ -18,22 +19,21 @@ import Diagrams.Prelude
 import Longhand.Types
 
 --------------------------------------------------------------------------------
--- Connect Glyphs --------------------------------------------------------------
+-- Merge Strokes ---------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-connectGlyphs :: Located Glyph -> Located Glyph
-              -> (Located Glyph, Located Glyph)
-connectGlyphs l1@(Loc p1@(P v1) g1) l2@(Loc p2@(P v2) g2) =
-  case (glyphTail g1, glyphHead g2) of
-    (Just s1, Just s2) ->
-      ( Loc p1 $ g1
-          { glyphTail = Just $ mergeStrokes s1 $ translate (v2 ^-^ v1) s2 }
-      , Loc p2 $ g2
-          { glyphHead = Nothing }
-      )
-    _ -> (l1, l2)
+mergeStrokes :: Stroke -> Stroke -> Stroke
+mergeStrokes = undefined
 
-connectWord :: GlyphWord -> GlyphWord
+--------------------------------------------------------------------------------
+-- Connect Glyphs and Words ----------------------------------------------------
+--------------------------------------------------------------------------------
+
+connectGlyphs :: Arranged Glyph -> Arranged Glyph
+              -> (Arranged Glyph, Arranged Glyph)
+connectGlyphs = undefined
+
+connectWord :: Arranged GlyphWord -> Arranged GlyphWord
 connectWord [] = []
 connectWord (g:gs) = go g gs
   where
@@ -42,18 +42,35 @@ connectWord (g:gs) = go g gs
       let (g1', g2') = connectGlyphs g1 g2
       in  g1' : go g2' gs
 
-connectLine :: GlyphLine -> GlyphLine
-connectLine = map (mapLoc connectWord)
 
-connectPara :: GlyphPara -> GlyphPara
-connectPara = map (mapLoc connectLine)
+class ConnectWords a where
+  connectWords :: a -> a
 
-connectDoc :: GlyphDoc -> GlyphDoc
-connectDoc = map (mapLoc connectPara)
+instance ConnectWords [[Located Glyph]] where
+  connectWords = map connectWord
 
+instance ConnectWords a => ConnectWords [a] where
+  connectWords = map connectWords
+
+instance ConnectWords a => ConnectWords (Located a) where
+  connectWords = mapLoc connectWords
+
+{-
 --------------------------------------------------------------------------------
--- Combine Glyph Strokes -------------------------------------------------------
+-- Merge Glyphs and Strokes ----------------------------------------------------
 --------------------------------------------------------------------------------
+
+connect :: Aligned Glyph -> Aligned Glyph
+              -> (Aligned Glyph, Aligned Glyph)
+connect l1@(Loc p1@(P v1) g1) l2@(Loc p2@(P v2) g2) =
+  case (glyphTail g1, glyphHead g2) of
+    (Just s1, Just s2) ->
+      ( Loc p1 $ g1
+          { glyphTail = Just $ mergeStrokes s1 $ translate (v2 ^-^ v1) s2 }
+      , Loc p2 $ g2
+          { glyphHead = Nothing }
+      )
+    _ -> (l1, l2)
 
 mergeStrokes :: GlyphStroke -> GlyphStroke -> GlyphStroke
 mergeStrokes g1 g2 = GlyphStroke
@@ -77,3 +94,4 @@ mergeCurves g1 g2 = GlyphCurve
     c1'          = glyphCurveStartPoint g1 ^+^ startTangent ^* scale
     c2'          = glyphCurveEndPoint   g2 ^+^ endTangent   ^* scale
 
+-}

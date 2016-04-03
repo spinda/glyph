@@ -1,16 +1,29 @@
 -- | Randomly perturb source glyphs to produce unique derivative glyphs, to
 -- produce a more natural handwriting feel.
 
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+
 module Longhand.Perturb (
     -- * Randomly Perturb Glyphs
     perturbGlyph
-  , perturbWord
-  , perturbLine
-  , perturbPara
-  , perturbDoc
+  , perturbGlyph'
+  , perturbGlyphs
+  , PerturbGlyphs(..)
+
+    -- * Warp Glyphs with Period Wave Functions
+  , warpPoint
+  , warpStroke
+  , warpGlyph
+  , WarpGlyphs(..)
+
+    -- * Periodic Wave Generators
+  , defaultWaveGenerator
   ) where
 
+import Data.Bifunctor
 import Data.List
+import Data.Tuple
 
 import Diagrams.Prelude
 
@@ -23,48 +36,29 @@ import Longhand.Types
 --------------------------------------------------------------------------------
 
 perturbGlyph :: RandomGen r => Double -> r -> Glyph -> (r, Glyph)
-perturbGlyph scale rand glyph = (rand', warpGlyph wave glyph)
-  where
-    wave = sineWave pairs scale
-    (rand', pairs) = randomPairs 3 rand
+perturbGlyph = perturbGlyph' . defaultWaveGenerator
 
-randomPairs :: RandomGen r => Int -> r -> (r, [(Double, Double)])
-randomPairs n r = mapAccumL go r [1..n]
-  where
-    go r _ = let (x, r' ) = randomR (0, 1) r
-                 (y, r'') = randomR (0, 1) r'
-             in  (r'', (x, y))
+perturbGlyph' :: RandomGen r => (r -> (r, Double -> Double)) -> r
+              -> Glyph -> (r, Glyph)
+perturbGlyph' waveGenerator rand glyph =
+  second (`warpGlyph` glyph) $ waveGenerator rand
 
 
-perturbWord :: RandomGen r => Double -> r -> RawWord -> (r, RawWord)
-perturbWord scale = mapAccumL (perturbGlyph scale)
+perturbGlyphs :: (PerturbGlyphs a, RandomGen r) => Double -> r -> a -> (r, a)
+perturbGlyphs = perturbGlyphs' . defaultWaveGenerator
 
-perturbLine :: RandomGen r => Double -> r -> RawLine -> (r, RawLine)
-perturbLine scale = mapAccumL (perturbWord scale)
+class PerturbGlyphs a where
+  perturbGlyphs' :: RandomGen r => (r -> (r, Double -> Double)) -> r -> a -> (r, a)
 
-perturbPara :: RandomGen r => Double -> r -> RawPara -> (r, RawPara)
-perturbPara scale = mapAccumL (perturbLine scale)
+instance PerturbGlyphs GlyphWord where
+  perturbGlyphs' = mapAccumL . perturbGlyph'
 
-perturbDoc :: RandomGen r => Double -> r -> RawDoc -> (r, RawDoc)
-perturbDoc scale = mapAccumL (perturbPara scale)
+instance PerturbGlyphs a => PerturbGlyphs [a] where
+  perturbGlyphs' = mapAccumL . perturbGlyphs'
 
 --------------------------------------------------------------------------------
--- Warp Glyphs & Glyph Components ----------------------------------------------
+-- Warp Glyphs with Periodic Wave Functions ------------------------------------
 --------------------------------------------------------------------------------
-
-warpGlyph :: (Double -> Double) -> Glyph -> Glyph
-warpGlyph wave glyph = mapGlyphStrokes (warpStroke wave centroid) glyph
-  where
-    centroid = glyphCentroid glyph
-
-warpStroke :: (Double -> Double) -> P2 Double -> GlyphStroke -> GlyphStroke
-warpStroke wave centroid = mapStrokeCurve (warpCurve wave centroid)
-
-warpCurve :: (Double -> Double) -> P2 Double -> GlyphCurve -> GlyphCurve
-warpCurve wave centroid curve = curveDragEndpoints curve st' ed'
-  where
-    st' = warpPoint wave centroid $ glyphCurveStartPoint curve
-    ed' = warpPoint wave centroid $ glyphCurveEndPoint curve
 
 warpPoint :: (Double -> Double) -> P2 Double -> P2 Double -> P2 Double
 warpPoint wave centroid point = relPoint ^* wave angle ^+^ centroid
@@ -73,13 +67,33 @@ warpPoint wave centroid point = relPoint ^* wave angle ^+^ centroid
     (relX, relY) = unp2 relPoint
     relPoint     = point ^-^ centroid
 
+warpStroke :: (Double -> Double) -> P2 Double -> Stroke -> Stroke
+warpStroke wave centroid = mapStrokePoints (warpPoint wave centroid)
+
+warpGlyph :: (Double -> Double) -> Glyph -> Glyph
+warpGlyph wave glyph =
+  mapGlyphPoints (warpPoint wave $ glyphCentroid glyph) glyph
+
+
+class WarpGlyphs a where
+  warpGlyphs :: (Double -> Double) -> a -> a
+
+instance WarpGlyphs GlyphWord where
+  warpGlyphs = map . warpGlyph
+
+instance WarpGlyphs a => WarpGlyphs [a] where
+  warpGlyphs = map . warpGlyphs
+
 --------------------------------------------------------------------------------
--- Periodic Wave Functions -----------------------------------------------------
+-- Periodic Wave Generators ----------------------------------------------------
 --------------------------------------------------------------------------------
 
-sineWave :: [(Double, Double)] -> Double -> Double -> Double
-sineWave coefficients scale t = exp (scale * value)
+defaultWaveGenerator :: RandomGen r => Double -> r -> (r, Double -> Double)
+defaultWaveGenerator scale rand = (rand', wave)
   where
-    value = sum $ map (uncurry order) $ zip [0..] coefficients
-    order i (a, b) = a * cos (i * t) + b * sin ((i + 1) * t)
+    wave t = exp $ (scale *) $ sum $ map (order t) coefficients
+    order t (i, (a, b)) = a * cos (i * t) + b * sin ((i + 1) * t)
+
+    coefficients = zip [0..] $ zip (take 3 xs) (drop 3 xs)
+    (rand', xs) = mapAccumL (\r _ -> swap $ randomR (0, 1) r) rand [1..6]
 
