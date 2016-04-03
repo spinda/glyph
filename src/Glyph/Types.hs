@@ -25,7 +25,7 @@ module Glyph.Types (
   , mapStrokeStepPoint
 
     -- * Collections of Glyphs
-  , Arranged
+  , Aligned
   , GlyphWord
   , GlyphLine
   , GlyphPara

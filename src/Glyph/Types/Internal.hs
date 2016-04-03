@@ -29,7 +29,7 @@ module Glyph.Types.Internal (
   , mapStrokeStepPoint
 
     -- * Collections of Glyphs
-  , Arranged
+  , Aligned
   , GlyphWord
   , GlyphLine
   , GlyphPara
@@ -147,10 +147,10 @@ mapStrokeStepPoint f handle = handle
 -- Collections of Glyphs -------------------------------------------------------
 --------------------------------------------------------------------------------
 
-type family Arranged a where
-  Arranged [[a]] = [Located (Arranged [a])]
-  Arranged [a] = [Arranged a]
-  Arranged a = Located a
+type family Aligned a where
+  Aligned [[a]] = [Located (Aligned [a])]
+  Aligned [a] = [Aligned a]
+  Aligned a = Located a
 
 type GlyphWord = [Glyph]
 type GlyphLine = [GlyphWord]

@@ -42,19 +42,19 @@ renderStroke = strokeP . cubicSpline False . strokePoints
 --------------------------------------------------------------------------------
 
 renderWord :: Renderable (Path V2 Double) b
-           => Arranged GlyphWord -> QDiagram b V2 Double Any
+           => Aligned GlyphWord -> QDiagram b V2 Double Any
 renderWord = mconcat . map (flattenLocated . mapLoc renderGlyph)
 
 renderLine :: Renderable (Path V2 Double) b
-           => Arranged GlyphLine -> QDiagram b V2 Double Any
+           => Aligned GlyphLine -> QDiagram b V2 Double Any
 renderLine = mconcat . map (flattenLocated . mapLoc renderWord)
 
 renderPara :: Renderable (Path V2 Double) b
-           => Arranged GlyphPara -> QDiagram b V2 Double Any
+           => Aligned GlyphPara -> QDiagram b V2 Double Any
 renderPara = mconcat . map (flattenLocated . mapLoc renderLine)
 
 renderDoc :: Renderable (Path V2 Double) b
-           => Arranged GlyphDoc -> QDiagram b V2 Double Any
+           => Aligned GlyphDoc -> QDiagram b V2 Double Any
 renderDoc = mconcat . map (flattenLocated . mapLoc renderPara)
 
 

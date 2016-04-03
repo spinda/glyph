@@ -10,8 +10,7 @@ module Glyph.Connect (
 
     -- * Connect Glyphs and Words
   , connectGlyphs
-  , connectWord
-  , ConnectWords(..)
+  , connectGlyphWord
   ) where
 
 import Diagrams.Prelude
@@ -29,37 +28,20 @@ mergeStrokes = undefined
 -- Connect Glyphs and Words ----------------------------------------------------
 --------------------------------------------------------------------------------
 
-connectGlyphs :: Arranged Glyph -> Arranged Glyph
-              -> (Arranged Glyph, Arranged Glyph)
+connectGlyphs :: Aligned Glyph -> Aligned Glyph
+              -> (Aligned Glyph, Aligned Glyph)
 connectGlyphs = undefined
 
-connectWord :: Arranged GlyphWord -> Arranged GlyphWord
-connectWord [] = []
-connectWord (g:gs) = go g gs
+connectGlyphWord :: Aligned GlyphWord -> Aligned GlyphWord
+connectGlyphWord [] = []
+connectGlyphWord (g:gs) = go g gs
   where
     go g1 [] = [g1]
     go g1 (g2:gs) =
       let (g1', g2') = connectGlyphs g1 g2
       in  g1' : go g2' gs
 
-
-class ConnectWords a where
-  connectWords :: a -> a
-
-instance ConnectWords [[Located Glyph]] where
-  connectWords = map connectWord
-
-instance ConnectWords a => ConnectWords [a] where
-  connectWords = map connectWords
-
-instance ConnectWords a => ConnectWords (Located a) where
-  connectWords = mapLoc connectWords
-
 {-
---------------------------------------------------------------------------------
--- Merge Glyphs and Strokes ----------------------------------------------------
---------------------------------------------------------------------------------
-
 connect :: Aligned Glyph -> Aligned Glyph
               -> (Aligned Glyph, Aligned Glyph)
 connect l1@(Loc p1@(P v1) g1) l2@(Loc p2@(P v2) g2) =

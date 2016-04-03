@@ -8,14 +8,11 @@ module Glyph.Perturb (
     -- * Randomly Perturb Glyphs
     perturbGlyph
   , perturbGlyph'
-  , perturbGlyphs
-  , PerturbGlyphs(..)
 
     -- * Warp Glyphs with Period Wave Functions
   , warpPoint
   , warpStroke
   , warpGlyph
-  , WarpGlyphs(..)
 
     -- * Periodic Wave Generators
   , defaultWaveGenerator
@@ -44,19 +41,6 @@ perturbGlyph' :: RandomGen r => (r -> (r, Double -> Double)) -> r
 perturbGlyph' waveGenerator rand glyph =
   second (`warpGlyph` glyph) $ waveGenerator rand
 
-
-perturbGlyphs :: (PerturbGlyphs a, RandomGen r) => Double -> r -> a -> (r, a)
-perturbGlyphs = perturbGlyphs' . defaultWaveGenerator
-
-class PerturbGlyphs a where
-  perturbGlyphs' :: RandomGen r => (r -> (r, Double -> Double)) -> r -> a -> (r, a)
-
-instance PerturbGlyphs GlyphWord where
-  perturbGlyphs' = mapAccumL . perturbGlyph'
-
-instance PerturbGlyphs a => PerturbGlyphs [a] where
-  perturbGlyphs' = mapAccumL . perturbGlyphs'
-
 --------------------------------------------------------------------------------
 -- Warp Glyphs with Periodic Wave Functions ------------------------------------
 --------------------------------------------------------------------------------
@@ -74,16 +58,6 @@ warpStroke wave centroid = mapStrokePoints (warpPoint wave centroid)
 warpGlyph :: (Double -> Double) -> Glyph -> Glyph
 warpGlyph wave glyph =
   mapGlyphPoints (warpPoint wave $ glyphCentroid glyph) glyph
-
-
-class WarpGlyphs a where
-  warpGlyphs :: (Double -> Double) -> a -> a
-
-instance WarpGlyphs GlyphWord where
-  warpGlyphs = map . warpGlyph
-
-instance WarpGlyphs a => WarpGlyphs [a] where
-  warpGlyphs = map . warpGlyphs
 
 --------------------------------------------------------------------------------
 -- Periodic Wave Generators ----------------------------------------------------
