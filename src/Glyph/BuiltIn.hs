@@ -6,7 +6,7 @@
 
 {-# LANGUAGE TemplateHaskell #-}
 
-module Longhand.BuiltIn (
+module Glyph.BuiltIn (
     -- * Built-In Glyph Data 
     builtInGlyphMap
   ) where
@@ -15,9 +15,9 @@ import Language.Haskell.TH.Syntax
 
 import System.FilePath
 
-import Longhand.Paths
-import Longhand.TH
-import Longhand.Types
+import Glyph.Paths
+import Glyph.TH
+import Glyph.Types
 
 --------------------------------------------------------------------------------
 -- Built-In Glyph Data ---------------------------------------------------------

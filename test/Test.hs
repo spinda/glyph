@@ -6,9 +6,9 @@ import qualified Data.CharMap.Strict as M
 import Test.Tasty
 import Test.Tasty.HUnit
 
-import Longhand.Glyphs.BuiltIn
-import Longhand.Glyphs.BuiltIn.Paths
-import Longhand.Parse
+import Glyph.Glyphs.BuiltIn
+import Glyph.Glyphs.BuiltIn.Paths
+import Glyph.Parse
 
 main :: IO ()
 main = defaultMain tests

@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Longhand.Arrange (
+module Glyph.Arrange (
     -- * Recursively Arrange Glyph Groups
     Arrange(..)
 
@@ -18,7 +18,7 @@ import Data.List
 
 import Diagrams.Prelude
 
-import Longhand.Types
+import Glyph.Types
 
 --------------------------------------------------------------------------------
 -- Recursively Arrange Glyph Groups --------------------------------------------

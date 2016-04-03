@@ -2,7 +2,7 @@
 
 {-# LANGUAGE FlexibleContexts #-}
 
-module Longhand.Render (
+module Glyph.Render (
     -- * Rendering Glyphs
     renderGlyph
   , renderStrokes
@@ -19,7 +19,7 @@ import Data.List
 
 import Diagrams.Prelude
 
-import Longhand.Types
+import Glyph.Types
 
 --------------------------------------------------------------------------------
 -- Rendering Glyphs ------------------------------------------------------------

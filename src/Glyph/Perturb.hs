@@ -4,7 +4,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
-module Longhand.Perturb (
+module Glyph.Perturb (
     -- * Randomly Perturb Glyphs
     perturbGlyph
   , perturbGlyph'
@@ -29,7 +29,7 @@ import Diagrams.Prelude
 
 import System.Random
 
-import Longhand.Types
+import Glyph.Types
 
 --------------------------------------------------------------------------------
 -- Randomly Perturb Glyphs -----------------------------------------------------

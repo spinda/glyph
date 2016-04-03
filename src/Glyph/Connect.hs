@@ -4,7 +4,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
-module Longhand.Connect (
+module Glyph.Connect (
     -- * Merge Strokes
     mergeStrokes
 
@@ -16,7 +16,7 @@ module Longhand.Connect (
 
 import Diagrams.Prelude
 
-import Longhand.Types
+import Glyph.Types
 
 --------------------------------------------------------------------------------
 -- Merge Strokes ---------------------------------------------------------------

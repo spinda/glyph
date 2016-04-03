@@ -2,7 +2,7 @@
 
 {-# LANGUAGE TemplateHaskell #-}
 
-module Longhand.TH (
+module Glyph.TH (
     -- * Template Haskell API
     importGlyphFiles
   , importGlyphFile
@@ -21,8 +21,8 @@ import Language.Haskell.TH.Quote
 
 import System.FilePath
 
-import Longhand.Parse
-import Longhand.Types
+import Glyph.Parse
+import Glyph.Types
 
 --------------------------------------------------------------------------------
 -- Template Haskell API --------------------------------------------------------
@@ -34,7 +34,7 @@ importGlyphFiles fs = do
   result <- runIO $ parseGlyphFiles fs
   case result of
     Left errs -> fail $
-      "Longhand failed to parse glyph files:\n\n        "
+      "Glyph failed to parse glyph files:\n\n        "
         ++ intercalate "\n\n        " (describe <$> errs)
     Right out -> dataToExpQ' out
   where
@@ -46,7 +46,7 @@ importGlyphFile f = do
   result <- runIO $ parseGlyphFile f
   case result of
     Left err -> fail $
-      "Longhand failed to parse glyph file \""
+      "Glyph failed to parse glyph file \""
         ++ f ++ "\":\n\n        "
         ++ err
     Right out -> dataToExpQ' out

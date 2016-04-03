@@ -4,7 +4,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Longhand.Types (
+module Glyph.Types (
     -- * Map from Char to Glyph Data
     GlyphMap
 
