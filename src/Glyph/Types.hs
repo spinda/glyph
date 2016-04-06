@@ -32,7 +32,8 @@ module Glyph.Types (
   , StrokeStepKind(..)
   , StrokeCap(..)
   , emptyStroke
-  , mkStrokeStep
+  , normalStrokeStep
+  , connectionStrokeStep
   , strokeSteps
   , strokePoints
   , mapStrokeSteps

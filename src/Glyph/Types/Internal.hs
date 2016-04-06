@@ -36,7 +36,8 @@ module Glyph.Types.Internal (
   , StrokeStepKind(..)
   , StrokeCap(..)
   , emptyStroke
-  , mkStrokeStep
+  , normalStrokeStep
+  , connectionStrokeStep
   , strokeSteps
   , strokePoints
   , mapStrokeSteps
@@ -141,11 +142,18 @@ emptyStroke = Stroke
   , strokeEndCap   = SharpCap
   }
 
-mkStrokeStep :: P2 Double -> Double -> StrokeStep
-mkStrokeStep pt width = StrokeStep
+normalStrokeStep :: P2 Double -> Double -> StrokeStep
+normalStrokeStep pt width = StrokeStep
   { strokeStepPoint = pt
   , strokeStepWidth = width
   , strokeStepKind  = NormalStep
+  }
+
+connectionStrokeStep :: P2 Double -> Double -> StrokeStep
+connectionStrokeStep pt width = StrokeStep
+  { strokeStepPoint = pt
+  , strokeStepWidth = width
+  , strokeStepKind  = ConnectionStep
   }
 
 strokeSteps :: Stroke -> [StrokeStep]
